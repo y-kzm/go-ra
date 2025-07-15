@@ -30,6 +30,7 @@ type advertiser struct {
 
 	reloadCh      chan *InterfaceConfig
 	stopCh        chan any
+	doneCh        chan struct{}
 	socketCtor    socketCtor
 	deviceWatcher deviceWatcher
 }
@@ -47,6 +48,7 @@ func newAdvertiser(initialConfig *InterfaceConfig, ctor socketCtor, devWatcher d
 		ifaceStatus:   &InterfaceStatus{Name: initialConfig.Name, State: "Unknown"},
 		reloadCh:      make(chan *InterfaceConfig),
 		stopCh:        make(chan any),
+		doneCh:        make(chan struct{}),
 		socketCtor:    ctor,
 		deviceWatcher: devWatcher,
 	}
@@ -334,6 +336,16 @@ reload:
 				s.reportStopped(ctx.Err())
 				break reload
 			case <-s.stopCh:
+				s.logger.Info("Stopping advertiser")
+				// RA message with RouterLifetime set to 0
+				config.RouterLifetimeSeconds = 0
+				msg = s.createRAMsg(config, &devState)
+
+				// Send unsolicited RA with RouterLifetime set to 0
+				err := sock.sendRA(ctx, netip.IPv6LinkLocalAllNodes(), msg)
+				if err != nil {
+					s.logger.Error("Failed to send an RA with RouterLifetime set to 0", "error", err)
+				}
 				s.reportStopped(nil)
 				break reload
 			}
@@ -342,6 +354,7 @@ reload:
 
 	cancelReceiver()
 	sock.close()
+	close(s.doneCh)
 }
 
 func (s *advertiser) status() *InterfaceStatus {

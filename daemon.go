@@ -155,6 +155,24 @@ func (d *Daemon) Reload(ctx context.Context, newConfig *Config) error {
 	return nil
 }
 
+// Stop stops all advertisers of the daemon
+func (d *Daemon) Stop(ctx context.Context) error {
+	d.advertisersLock.Lock()
+
+	for _, advertiser := range d.advertisers {
+		advertiser.stop()
+		select {
+		case <-advertiser.doneCh:
+		case <-ctx.Done():
+			return ctx.Err()
+		}
+	}
+
+	d.advertisersLock.Unlock()
+
+	return nil
+}
+
 // Status returns the current status of the daemon
 func (d *Daemon) Status() *Status {
 	d.advertisersLock.RLock()
