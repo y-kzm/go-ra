@@ -104,7 +104,7 @@ type InterfaceConfig struct {
 
 	// If true, send a final RA with RouterLifetime=0 and all option lifetimes
 	// zeroed before stopping, to notify hosts that this router is no longer available.
-	SendGoodbye bool `yaml:"sendGoodbye" json:"sendGoodbye" default:"true"`
+	SendGoodbye *bool `yaml:"sendGoodbye" json:"sendGoodbye" default:"true"`
 }
 
 // PrefixConfig represents the prefix-specific configuration parameters

@@ -364,13 +364,13 @@ reload:
 					continue reload
 				}
 			case <-ctx.Done():
-				if config.SendGoodbye {
+				if *config.SendGoodbye {
 					sendGoodbyeRA()
 				}
 				s.reportStopped(ctx.Err())
 				break reload
 			case <-s.stopCh:
-				if config.SendGoodbye {
+				if *config.SendGoodbye {
 					sendGoodbyeRA()
 				}
 				s.reportStopped(nil)
