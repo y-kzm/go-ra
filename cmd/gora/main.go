@@ -12,6 +12,7 @@ import (
 	"text/tabwriter"
 	"time"
 
+	ra "github.com/YutaroHayakawa/go-ra"
 	gorav1 "github.com/YutaroHayakawa/go-ra/api/gora/v1"
 	"github.com/YutaroHayakawa/go-ra/cmd/internal"
 	"gopkg.in/yaml.v3"
@@ -27,9 +28,11 @@ func usageRoot() {
 	fmt.Printf("Usage: %s <subcommand> [options]\n", os.Args[0])
 	fmt.Println()
 	fmt.Println("Subcommands:")
-	fmt.Println("  status\tGet the status of the service")
-	fmt.Println("  help\t\tShow this message")
-	fmt.Println("  version\tShow the version information")
+	fmt.Println("  status\t\tGet the status of the service")
+	fmt.Println("  add-interface\t\tAdd an interface configuration")
+	fmt.Println("  delete-interface\tDelete an interface configuration")
+	fmt.Println("  help\t\t\tShow this message")
+	fmt.Println("  version\t\tShow the version information")
 }
 
 func main() {
@@ -69,8 +72,97 @@ func main() {
 		return
 	}
 
+	if os.Args[1] == "add-interface" {
+		var (
+			serverAddr string
+			configFile string
+		)
+		command := flag.NewFlagSet("add-interface", flag.ExitOnError)
+		command.StringVar(&serverAddr, "s", "localhost:50051", "gRPC server address")
+		command.StringVar(&configFile, "f", "", "interface config file path (YAML)")
+		command.Parse(os.Args[2:])
+
+		if configFile == "" {
+			fmt.Println("Interface config file path is required (-f)")
+			os.Exit(1)
+		}
+
+		client, err := internal.NewClient(serverAddr)
+		if err != nil {
+			fmt.Printf("Failed to connect to server: %s\n", err.Error())
+			os.Exit(1)
+		}
+		defer client.Close()
+
+		addInterface(client, configFile)
+		return
+	}
+
+	if os.Args[1] == "delete-interface" {
+		var (
+			serverAddr string
+			id         int
+		)
+		command := flag.NewFlagSet("delete-interface", flag.ExitOnError)
+		command.StringVar(&serverAddr, "s", "localhost:50051", "gRPC server address")
+		command.IntVar(&id, "id", 0, "interface ID to delete")
+		command.Parse(os.Args[2:])
+
+		if id == 0 {
+			fmt.Println("Interface ID is required (--id)")
+			os.Exit(1)
+		}
+
+		client, err := internal.NewClient(serverAddr)
+		if err != nil {
+			fmt.Printf("Failed to connect to server: %s\n", err.Error())
+			os.Exit(1)
+		}
+		defer client.Close()
+
+		deleteInterface(client, id)
+		return
+	}
+
 	usageRoot()
 	os.Exit(1)
+}
+
+func addInterface(client *internal.Client, configFile string) {
+	f, err := os.Open(configFile)
+	if err != nil {
+		fmt.Printf("Failed to open config file: %s\n", err.Error())
+		os.Exit(1)
+	}
+	defer f.Close()
+
+	var ifaceConfig ra.InterfaceConfig
+	if err := yaml.NewDecoder(f).Decode(&ifaceConfig); err != nil {
+		fmt.Printf("Failed to parse config file: %s\n", err.Error())
+		os.Exit(1)
+	}
+
+	_, err = client.AddInterface(context.Background(), &gorav1.AddInterfaceRequest{
+		Interface: internal.InterfaceConfigToProto(&ifaceConfig),
+	})
+	if err != nil {
+		fmt.Printf("Failed to add interface: %s\n", err.Error())
+		os.Exit(1)
+	}
+
+	fmt.Println("Successfully added interface.")
+}
+
+func deleteInterface(client *internal.Client, id int) {
+	_, err := client.DeleteInterface(context.Background(), &gorav1.DeleteInterfaceRequest{
+		Id: int32(id),
+	})
+	if err != nil {
+		fmt.Printf("Failed to delete interface: %s\n", err.Error())
+		os.Exit(1)
+	}
+
+	fmt.Println("Successfully deleted interface.")
 }
 
 func status(client *internal.Client, output string) {

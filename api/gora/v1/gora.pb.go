@@ -12,6 +12,7 @@ package gorav1
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	wrapperspb "google.golang.org/protobuf/types/known/wrapperspb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
@@ -196,11 +197,659 @@ func (x *InterfaceStatus) GetTxUnsolicitedRa() int32 {
 	return 0
 }
 
+type AddInterfaceRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Interface     *InterfaceConfig       `protobuf:"bytes,1,opt,name=interface,proto3" json:"interface,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AddInterfaceRequest) Reset() {
+	*x = AddInterfaceRequest{}
+	mi := &file_api_gora_v1_gora_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AddInterfaceRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AddInterfaceRequest) ProtoMessage() {}
+
+func (x *AddInterfaceRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_api_gora_v1_gora_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AddInterfaceRequest.ProtoReflect.Descriptor instead.
+func (*AddInterfaceRequest) Descriptor() ([]byte, []int) {
+	return file_api_gora_v1_gora_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *AddInterfaceRequest) GetInterface() *InterfaceConfig {
+	if x != nil {
+		return x.Interface
+	}
+	return nil
+}
+
+type AddInterfaceResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *AddInterfaceResponse) Reset() {
+	*x = AddInterfaceResponse{}
+	mi := &file_api_gora_v1_gora_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AddInterfaceResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AddInterfaceResponse) ProtoMessage() {}
+
+func (x *AddInterfaceResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_api_gora_v1_gora_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AddInterfaceResponse.ProtoReflect.Descriptor instead.
+func (*AddInterfaceResponse) Descriptor() ([]byte, []int) {
+	return file_api_gora_v1_gora_proto_rawDescGZIP(), []int{4}
+}
+
+type DeleteInterfaceRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            int32                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteInterfaceRequest) Reset() {
+	*x = DeleteInterfaceRequest{}
+	mi := &file_api_gora_v1_gora_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteInterfaceRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteInterfaceRequest) ProtoMessage() {}
+
+func (x *DeleteInterfaceRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_api_gora_v1_gora_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteInterfaceRequest.ProtoReflect.Descriptor instead.
+func (*DeleteInterfaceRequest) Descriptor() ([]byte, []int) {
+	return file_api_gora_v1_gora_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *DeleteInterfaceRequest) GetId() int32 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
+type DeleteInterfaceResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteInterfaceResponse) Reset() {
+	*x = DeleteInterfaceResponse{}
+	mi := &file_api_gora_v1_gora_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteInterfaceResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteInterfaceResponse) ProtoMessage() {}
+
+func (x *DeleteInterfaceResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_api_gora_v1_gora_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteInterfaceResponse.ProtoReflect.Descriptor instead.
+func (*DeleteInterfaceResponse) Descriptor() ([]byte, []int) {
+	return file_api_gora_v1_gora_proto_rawDescGZIP(), []int{6}
+}
+
+type InterfaceConfig struct {
+	state                      protoimpl.MessageState `protogen:"open.v1"`
+	Id                         int32                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Description                string                 `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"`
+	Name                       string                 `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
+	RaIntervalMilliseconds     int32                  `protobuf:"varint,4,opt,name=ra_interval_milliseconds,json=raIntervalMilliseconds,proto3" json:"ra_interval_milliseconds,omitempty"`
+	CurrentHopLimit            int32                  `protobuf:"varint,5,opt,name=current_hop_limit,json=currentHopLimit,proto3" json:"current_hop_limit,omitempty"`
+	Managed                    bool                   `protobuf:"varint,6,opt,name=managed,proto3" json:"managed,omitempty"`
+	Other                      bool                   `protobuf:"varint,7,opt,name=other,proto3" json:"other,omitempty"`
+	Preference                 string                 `protobuf:"bytes,8,opt,name=preference,proto3" json:"preference,omitempty"`
+	RouterLifetimeSeconds      int32                  `protobuf:"varint,9,opt,name=router_lifetime_seconds,json=routerLifetimeSeconds,proto3" json:"router_lifetime_seconds,omitempty"`
+	ReachableTimeMilliseconds  int64                  `protobuf:"varint,10,opt,name=reachable_time_milliseconds,json=reachableTimeMilliseconds,proto3" json:"reachable_time_milliseconds,omitempty"`
+	RetransmitTimeMilliseconds int64                  `protobuf:"varint,11,opt,name=retransmit_time_milliseconds,json=retransmitTimeMilliseconds,proto3" json:"retransmit_time_milliseconds,omitempty"`
+	Mtu                        int64                  `protobuf:"varint,12,opt,name=mtu,proto3" json:"mtu,omitempty"`
+	Prefixes                   []*PrefixConfig        `protobuf:"bytes,13,rep,name=prefixes,proto3" json:"prefixes,omitempty"`
+	Routes                     []*RouteConfig         `protobuf:"bytes,14,rep,name=routes,proto3" json:"routes,omitempty"`
+	Rdnsses                    []*RdnssConfig         `protobuf:"bytes,15,rep,name=rdnsses,proto3" json:"rdnsses,omitempty"`
+	Dnssls                     []*DnsslConfig         `protobuf:"bytes,16,rep,name=dnssls,proto3" json:"dnssls,omitempty"`
+	Nat64Prefixes              []*Nat64PrefixConfig   `protobuf:"bytes,17,rep,name=nat64_prefixes,json=nat64Prefixes,proto3" json:"nat64_prefixes,omitempty"`
+	Clients                    []string               `protobuf:"bytes,18,rep,name=clients,proto3" json:"clients,omitempty"`
+	SendGoodbye                *wrapperspb.BoolValue  `protobuf:"bytes,19,opt,name=send_goodbye,json=sendGoodbye,proto3" json:"send_goodbye,omitempty"`
+	DisableRsReply             bool                   `protobuf:"varint,20,opt,name=disable_rs_reply,json=disableRsReply,proto3" json:"disable_rs_reply,omitempty"`
+	unknownFields              protoimpl.UnknownFields
+	sizeCache                  protoimpl.SizeCache
+}
+
+func (x *InterfaceConfig) Reset() {
+	*x = InterfaceConfig{}
+	mi := &file_api_gora_v1_gora_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *InterfaceConfig) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*InterfaceConfig) ProtoMessage() {}
+
+func (x *InterfaceConfig) ProtoReflect() protoreflect.Message {
+	mi := &file_api_gora_v1_gora_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use InterfaceConfig.ProtoReflect.Descriptor instead.
+func (*InterfaceConfig) Descriptor() ([]byte, []int) {
+	return file_api_gora_v1_gora_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *InterfaceConfig) GetId() int32 {
+	if x != nil {
+		return x.Id
+	}
+	return 0
+}
+
+func (x *InterfaceConfig) GetDescription() string {
+	if x != nil {
+		return x.Description
+	}
+	return ""
+}
+
+func (x *InterfaceConfig) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *InterfaceConfig) GetRaIntervalMilliseconds() int32 {
+	if x != nil {
+		return x.RaIntervalMilliseconds
+	}
+	return 0
+}
+
+func (x *InterfaceConfig) GetCurrentHopLimit() int32 {
+	if x != nil {
+		return x.CurrentHopLimit
+	}
+	return 0
+}
+
+func (x *InterfaceConfig) GetManaged() bool {
+	if x != nil {
+		return x.Managed
+	}
+	return false
+}
+
+func (x *InterfaceConfig) GetOther() bool {
+	if x != nil {
+		return x.Other
+	}
+	return false
+}
+
+func (x *InterfaceConfig) GetPreference() string {
+	if x != nil {
+		return x.Preference
+	}
+	return ""
+}
+
+func (x *InterfaceConfig) GetRouterLifetimeSeconds() int32 {
+	if x != nil {
+		return x.RouterLifetimeSeconds
+	}
+	return 0
+}
+
+func (x *InterfaceConfig) GetReachableTimeMilliseconds() int64 {
+	if x != nil {
+		return x.ReachableTimeMilliseconds
+	}
+	return 0
+}
+
+func (x *InterfaceConfig) GetRetransmitTimeMilliseconds() int64 {
+	if x != nil {
+		return x.RetransmitTimeMilliseconds
+	}
+	return 0
+}
+
+func (x *InterfaceConfig) GetMtu() int64 {
+	if x != nil {
+		return x.Mtu
+	}
+	return 0
+}
+
+func (x *InterfaceConfig) GetPrefixes() []*PrefixConfig {
+	if x != nil {
+		return x.Prefixes
+	}
+	return nil
+}
+
+func (x *InterfaceConfig) GetRoutes() []*RouteConfig {
+	if x != nil {
+		return x.Routes
+	}
+	return nil
+}
+
+func (x *InterfaceConfig) GetRdnsses() []*RdnssConfig {
+	if x != nil {
+		return x.Rdnsses
+	}
+	return nil
+}
+
+func (x *InterfaceConfig) GetDnssls() []*DnsslConfig {
+	if x != nil {
+		return x.Dnssls
+	}
+	return nil
+}
+
+func (x *InterfaceConfig) GetNat64Prefixes() []*Nat64PrefixConfig {
+	if x != nil {
+		return x.Nat64Prefixes
+	}
+	return nil
+}
+
+func (x *InterfaceConfig) GetClients() []string {
+	if x != nil {
+		return x.Clients
+	}
+	return nil
+}
+
+func (x *InterfaceConfig) GetSendGoodbye() *wrapperspb.BoolValue {
+	if x != nil {
+		return x.SendGoodbye
+	}
+	return nil
+}
+
+func (x *InterfaceConfig) GetDisableRsReply() bool {
+	if x != nil {
+		return x.DisableRsReply
+	}
+	return false
+}
+
+type PrefixConfig struct {
+	state                    protoimpl.MessageState `protogen:"open.v1"`
+	Prefix                   string                 `protobuf:"bytes,1,opt,name=prefix,proto3" json:"prefix,omitempty"`
+	OnLink                   bool                   `protobuf:"varint,2,opt,name=on_link,json=onLink,proto3" json:"on_link,omitempty"`
+	Autonomous               bool                   `protobuf:"varint,3,opt,name=autonomous,proto3" json:"autonomous,omitempty"`
+	ValidLifetimeSeconds     *wrapperspb.Int64Value `protobuf:"bytes,4,opt,name=valid_lifetime_seconds,json=validLifetimeSeconds,proto3" json:"valid_lifetime_seconds,omitempty"`
+	PreferredLifetimeSeconds *wrapperspb.Int64Value `protobuf:"bytes,5,opt,name=preferred_lifetime_seconds,json=preferredLifetimeSeconds,proto3" json:"preferred_lifetime_seconds,omitempty"`
+	unknownFields            protoimpl.UnknownFields
+	sizeCache                protoimpl.SizeCache
+}
+
+func (x *PrefixConfig) Reset() {
+	*x = PrefixConfig{}
+	mi := &file_api_gora_v1_gora_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PrefixConfig) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PrefixConfig) ProtoMessage() {}
+
+func (x *PrefixConfig) ProtoReflect() protoreflect.Message {
+	mi := &file_api_gora_v1_gora_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PrefixConfig.ProtoReflect.Descriptor instead.
+func (*PrefixConfig) Descriptor() ([]byte, []int) {
+	return file_api_gora_v1_gora_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *PrefixConfig) GetPrefix() string {
+	if x != nil {
+		return x.Prefix
+	}
+	return ""
+}
+
+func (x *PrefixConfig) GetOnLink() bool {
+	if x != nil {
+		return x.OnLink
+	}
+	return false
+}
+
+func (x *PrefixConfig) GetAutonomous() bool {
+	if x != nil {
+		return x.Autonomous
+	}
+	return false
+}
+
+func (x *PrefixConfig) GetValidLifetimeSeconds() *wrapperspb.Int64Value {
+	if x != nil {
+		return x.ValidLifetimeSeconds
+	}
+	return nil
+}
+
+func (x *PrefixConfig) GetPreferredLifetimeSeconds() *wrapperspb.Int64Value {
+	if x != nil {
+		return x.PreferredLifetimeSeconds
+	}
+	return nil
+}
+
+type RouteConfig struct {
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	Prefix          string                 `protobuf:"bytes,1,opt,name=prefix,proto3" json:"prefix,omitempty"`
+	LifetimeSeconds int64                  `protobuf:"varint,2,opt,name=lifetime_seconds,json=lifetimeSeconds,proto3" json:"lifetime_seconds,omitempty"`
+	Preference      string                 `protobuf:"bytes,3,opt,name=preference,proto3" json:"preference,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *RouteConfig) Reset() {
+	*x = RouteConfig{}
+	mi := &file_api_gora_v1_gora_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RouteConfig) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RouteConfig) ProtoMessage() {}
+
+func (x *RouteConfig) ProtoReflect() protoreflect.Message {
+	mi := &file_api_gora_v1_gora_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RouteConfig.ProtoReflect.Descriptor instead.
+func (*RouteConfig) Descriptor() ([]byte, []int) {
+	return file_api_gora_v1_gora_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *RouteConfig) GetPrefix() string {
+	if x != nil {
+		return x.Prefix
+	}
+	return ""
+}
+
+func (x *RouteConfig) GetLifetimeSeconds() int64 {
+	if x != nil {
+		return x.LifetimeSeconds
+	}
+	return 0
+}
+
+func (x *RouteConfig) GetPreference() string {
+	if x != nil {
+		return x.Preference
+	}
+	return ""
+}
+
+type RdnssConfig struct {
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	LifetimeSeconds int64                  `protobuf:"varint,1,opt,name=lifetime_seconds,json=lifetimeSeconds,proto3" json:"lifetime_seconds,omitempty"`
+	Addresses       []string               `protobuf:"bytes,2,rep,name=addresses,proto3" json:"addresses,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *RdnssConfig) Reset() {
+	*x = RdnssConfig{}
+	mi := &file_api_gora_v1_gora_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RdnssConfig) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RdnssConfig) ProtoMessage() {}
+
+func (x *RdnssConfig) ProtoReflect() protoreflect.Message {
+	mi := &file_api_gora_v1_gora_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RdnssConfig.ProtoReflect.Descriptor instead.
+func (*RdnssConfig) Descriptor() ([]byte, []int) {
+	return file_api_gora_v1_gora_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *RdnssConfig) GetLifetimeSeconds() int64 {
+	if x != nil {
+		return x.LifetimeSeconds
+	}
+	return 0
+}
+
+func (x *RdnssConfig) GetAddresses() []string {
+	if x != nil {
+		return x.Addresses
+	}
+	return nil
+}
+
+type DnsslConfig struct {
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	LifetimeSeconds int64                  `protobuf:"varint,1,opt,name=lifetime_seconds,json=lifetimeSeconds,proto3" json:"lifetime_seconds,omitempty"`
+	DomainNames     []string               `protobuf:"bytes,2,rep,name=domain_names,json=domainNames,proto3" json:"domain_names,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *DnsslConfig) Reset() {
+	*x = DnsslConfig{}
+	mi := &file_api_gora_v1_gora_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DnsslConfig) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DnsslConfig) ProtoMessage() {}
+
+func (x *DnsslConfig) ProtoReflect() protoreflect.Message {
+	mi := &file_api_gora_v1_gora_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DnsslConfig.ProtoReflect.Descriptor instead.
+func (*DnsslConfig) Descriptor() ([]byte, []int) {
+	return file_api_gora_v1_gora_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *DnsslConfig) GetLifetimeSeconds() int64 {
+	if x != nil {
+		return x.LifetimeSeconds
+	}
+	return 0
+}
+
+func (x *DnsslConfig) GetDomainNames() []string {
+	if x != nil {
+		return x.DomainNames
+	}
+	return nil
+}
+
+type Nat64PrefixConfig struct {
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	Prefix          string                 `protobuf:"bytes,1,opt,name=prefix,proto3" json:"prefix,omitempty"`
+	LifetimeSeconds *wrapperspb.Int64Value `protobuf:"bytes,2,opt,name=lifetime_seconds,json=lifetimeSeconds,proto3" json:"lifetime_seconds,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
+}
+
+func (x *Nat64PrefixConfig) Reset() {
+	*x = Nat64PrefixConfig{}
+	mi := &file_api_gora_v1_gora_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Nat64PrefixConfig) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Nat64PrefixConfig) ProtoMessage() {}
+
+func (x *Nat64PrefixConfig) ProtoReflect() protoreflect.Message {
+	mi := &file_api_gora_v1_gora_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Nat64PrefixConfig.ProtoReflect.Descriptor instead.
+func (*Nat64PrefixConfig) Descriptor() ([]byte, []int) {
+	return file_api_gora_v1_gora_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *Nat64PrefixConfig) GetPrefix() string {
+	if x != nil {
+		return x.Prefix
+	}
+	return ""
+}
+
+func (x *Nat64PrefixConfig) GetLifetimeSeconds() *wrapperspb.Int64Value {
+	if x != nil {
+		return x.LifetimeSeconds
+	}
+	return nil
+}
+
 var File_api_gora_v1_gora_proto protoreflect.FileDescriptor
 
 const file_api_gora_v1_gora_proto_rawDesc = "" +
 	"\n" +
-	"\x16api/gora/v1/gora.proto\x12\agora.v1\"\x12\n" +
+	"\x16api/gora/v1/gora.proto\x12\agora.v1\x1a\x1egoogle/protobuf/wrappers.proto\"\x12\n" +
 	"\x10GetStatusRequest\"M\n" +
 	"\x11GetStatusResponse\x128\n" +
 	"\n" +
@@ -214,9 +863,64 @@ const file_api_gora_v1_gora_proto_rawDesc = "" +
 	"\vlast_update\x18\x05 \x01(\x03R\n" +
 	"lastUpdate\x12&\n" +
 	"\x0ftx_solicited_ra\x18\x06 \x01(\x05R\rtxSolicitedRa\x12*\n" +
-	"\x11tx_unsolicited_ra\x18\a \x01(\x05R\x0ftxUnsolicitedRa2Q\n" +
+	"\x11tx_unsolicited_ra\x18\a \x01(\x05R\x0ftxUnsolicitedRa\"M\n" +
+	"\x13AddInterfaceRequest\x126\n" +
+	"\tinterface\x18\x01 \x01(\v2\x18.gora.v1.InterfaceConfigR\tinterface\"\x16\n" +
+	"\x14AddInterfaceResponse\"(\n" +
+	"\x16DeleteInterfaceRequest\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\x05R\x02id\"\x19\n" +
+	"\x17DeleteInterfaceResponse\"\xde\x06\n" +
+	"\x0fInterfaceConfig\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\x05R\x02id\x12 \n" +
+	"\vdescription\x18\x02 \x01(\tR\vdescription\x12\x12\n" +
+	"\x04name\x18\x03 \x01(\tR\x04name\x128\n" +
+	"\x18ra_interval_milliseconds\x18\x04 \x01(\x05R\x16raIntervalMilliseconds\x12*\n" +
+	"\x11current_hop_limit\x18\x05 \x01(\x05R\x0fcurrentHopLimit\x12\x18\n" +
+	"\amanaged\x18\x06 \x01(\bR\amanaged\x12\x14\n" +
+	"\x05other\x18\a \x01(\bR\x05other\x12\x1e\n" +
+	"\n" +
+	"preference\x18\b \x01(\tR\n" +
+	"preference\x126\n" +
+	"\x17router_lifetime_seconds\x18\t \x01(\x05R\x15routerLifetimeSeconds\x12>\n" +
+	"\x1breachable_time_milliseconds\x18\n" +
+	" \x01(\x03R\x19reachableTimeMilliseconds\x12@\n" +
+	"\x1cretransmit_time_milliseconds\x18\v \x01(\x03R\x1aretransmitTimeMilliseconds\x12\x10\n" +
+	"\x03mtu\x18\f \x01(\x03R\x03mtu\x121\n" +
+	"\bprefixes\x18\r \x03(\v2\x15.gora.v1.PrefixConfigR\bprefixes\x12,\n" +
+	"\x06routes\x18\x0e \x03(\v2\x14.gora.v1.RouteConfigR\x06routes\x12.\n" +
+	"\ardnsses\x18\x0f \x03(\v2\x14.gora.v1.RdnssConfigR\ardnsses\x12,\n" +
+	"\x06dnssls\x18\x10 \x03(\v2\x14.gora.v1.DnsslConfigR\x06dnssls\x12A\n" +
+	"\x0enat64_prefixes\x18\x11 \x03(\v2\x1a.gora.v1.Nat64PrefixConfigR\rnat64Prefixes\x12\x18\n" +
+	"\aclients\x18\x12 \x03(\tR\aclients\x12=\n" +
+	"\fsend_goodbye\x18\x13 \x01(\v2\x1a.google.protobuf.BoolValueR\vsendGoodbye\x12(\n" +
+	"\x10disable_rs_reply\x18\x14 \x01(\bR\x0edisableRsReply\"\x8d\x02\n" +
+	"\fPrefixConfig\x12\x16\n" +
+	"\x06prefix\x18\x01 \x01(\tR\x06prefix\x12\x17\n" +
+	"\aon_link\x18\x02 \x01(\bR\x06onLink\x12\x1e\n" +
+	"\n" +
+	"autonomous\x18\x03 \x01(\bR\n" +
+	"autonomous\x12Q\n" +
+	"\x16valid_lifetime_seconds\x18\x04 \x01(\v2\x1b.google.protobuf.Int64ValueR\x14validLifetimeSeconds\x12Y\n" +
+	"\x1apreferred_lifetime_seconds\x18\x05 \x01(\v2\x1b.google.protobuf.Int64ValueR\x18preferredLifetimeSeconds\"p\n" +
+	"\vRouteConfig\x12\x16\n" +
+	"\x06prefix\x18\x01 \x01(\tR\x06prefix\x12)\n" +
+	"\x10lifetime_seconds\x18\x02 \x01(\x03R\x0flifetimeSeconds\x12\x1e\n" +
+	"\n" +
+	"preference\x18\x03 \x01(\tR\n" +
+	"preference\"V\n" +
+	"\vRdnssConfig\x12)\n" +
+	"\x10lifetime_seconds\x18\x01 \x01(\x03R\x0flifetimeSeconds\x12\x1c\n" +
+	"\taddresses\x18\x02 \x03(\tR\taddresses\"[\n" +
+	"\vDnsslConfig\x12)\n" +
+	"\x10lifetime_seconds\x18\x01 \x01(\x03R\x0flifetimeSeconds\x12!\n" +
+	"\fdomain_names\x18\x02 \x03(\tR\vdomainNames\"s\n" +
+	"\x11Nat64PrefixConfig\x12\x16\n" +
+	"\x06prefix\x18\x01 \x01(\tR\x06prefix\x12F\n" +
+	"\x10lifetime_seconds\x18\x02 \x01(\v2\x1b.google.protobuf.Int64ValueR\x0flifetimeSeconds2\xf4\x01\n" +
 	"\vGoRAService\x12B\n" +
-	"\tGetStatus\x12\x19.gora.v1.GetStatusRequest\x1a\x1a.gora.v1.GetStatusResponseB4Z2github.com/YutaroHayakawa/go-ra/api/gora/v1;gorav1b\x06proto3"
+	"\tGetStatus\x12\x19.gora.v1.GetStatusRequest\x1a\x1a.gora.v1.GetStatusResponse\x12K\n" +
+	"\fAddInterface\x12\x1c.gora.v1.AddInterfaceRequest\x1a\x1d.gora.v1.AddInterfaceResponse\x12T\n" +
+	"\x0fDeleteInterface\x12\x1f.gora.v1.DeleteInterfaceRequest\x1a .gora.v1.DeleteInterfaceResponseB4Z2github.com/YutaroHayakawa/go-ra/api/gora/v1;gorav1b\x06proto3"
 
 var (
 	file_api_gora_v1_gora_proto_rawDescOnce sync.Once
@@ -230,21 +934,47 @@ func file_api_gora_v1_gora_proto_rawDescGZIP() []byte {
 	return file_api_gora_v1_gora_proto_rawDescData
 }
 
-var file_api_gora_v1_gora_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
+var file_api_gora_v1_gora_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
 var file_api_gora_v1_gora_proto_goTypes = []any{
-	(*GetStatusRequest)(nil),  // 0: gora.v1.GetStatusRequest
-	(*GetStatusResponse)(nil), // 1: gora.v1.GetStatusResponse
-	(*InterfaceStatus)(nil),   // 2: gora.v1.InterfaceStatus
+	(*GetStatusRequest)(nil),        // 0: gora.v1.GetStatusRequest
+	(*GetStatusResponse)(nil),       // 1: gora.v1.GetStatusResponse
+	(*InterfaceStatus)(nil),         // 2: gora.v1.InterfaceStatus
+	(*AddInterfaceRequest)(nil),     // 3: gora.v1.AddInterfaceRequest
+	(*AddInterfaceResponse)(nil),    // 4: gora.v1.AddInterfaceResponse
+	(*DeleteInterfaceRequest)(nil),  // 5: gora.v1.DeleteInterfaceRequest
+	(*DeleteInterfaceResponse)(nil), // 6: gora.v1.DeleteInterfaceResponse
+	(*InterfaceConfig)(nil),         // 7: gora.v1.InterfaceConfig
+	(*PrefixConfig)(nil),            // 8: gora.v1.PrefixConfig
+	(*RouteConfig)(nil),             // 9: gora.v1.RouteConfig
+	(*RdnssConfig)(nil),             // 10: gora.v1.RdnssConfig
+	(*DnsslConfig)(nil),             // 11: gora.v1.DnsslConfig
+	(*Nat64PrefixConfig)(nil),       // 12: gora.v1.Nat64PrefixConfig
+	(*wrapperspb.BoolValue)(nil),    // 13: google.protobuf.BoolValue
+	(*wrapperspb.Int64Value)(nil),   // 14: google.protobuf.Int64Value
 }
 var file_api_gora_v1_gora_proto_depIdxs = []int32{
-	2, // 0: gora.v1.GetStatusResponse.interfaces:type_name -> gora.v1.InterfaceStatus
-	0, // 1: gora.v1.GoRAService.GetStatus:input_type -> gora.v1.GetStatusRequest
-	1, // 2: gora.v1.GoRAService.GetStatus:output_type -> gora.v1.GetStatusResponse
-	2, // [2:3] is the sub-list for method output_type
-	1, // [1:2] is the sub-list for method input_type
-	1, // [1:1] is the sub-list for extension type_name
-	1, // [1:1] is the sub-list for extension extendee
-	0, // [0:1] is the sub-list for field type_name
+	2,  // 0: gora.v1.GetStatusResponse.interfaces:type_name -> gora.v1.InterfaceStatus
+	7,  // 1: gora.v1.AddInterfaceRequest.interface:type_name -> gora.v1.InterfaceConfig
+	8,  // 2: gora.v1.InterfaceConfig.prefixes:type_name -> gora.v1.PrefixConfig
+	9,  // 3: gora.v1.InterfaceConfig.routes:type_name -> gora.v1.RouteConfig
+	10, // 4: gora.v1.InterfaceConfig.rdnsses:type_name -> gora.v1.RdnssConfig
+	11, // 5: gora.v1.InterfaceConfig.dnssls:type_name -> gora.v1.DnsslConfig
+	12, // 6: gora.v1.InterfaceConfig.nat64_prefixes:type_name -> gora.v1.Nat64PrefixConfig
+	13, // 7: gora.v1.InterfaceConfig.send_goodbye:type_name -> google.protobuf.BoolValue
+	14, // 8: gora.v1.PrefixConfig.valid_lifetime_seconds:type_name -> google.protobuf.Int64Value
+	14, // 9: gora.v1.PrefixConfig.preferred_lifetime_seconds:type_name -> google.protobuf.Int64Value
+	14, // 10: gora.v1.Nat64PrefixConfig.lifetime_seconds:type_name -> google.protobuf.Int64Value
+	0,  // 11: gora.v1.GoRAService.GetStatus:input_type -> gora.v1.GetStatusRequest
+	3,  // 12: gora.v1.GoRAService.AddInterface:input_type -> gora.v1.AddInterfaceRequest
+	5,  // 13: gora.v1.GoRAService.DeleteInterface:input_type -> gora.v1.DeleteInterfaceRequest
+	1,  // 14: gora.v1.GoRAService.GetStatus:output_type -> gora.v1.GetStatusResponse
+	4,  // 15: gora.v1.GoRAService.AddInterface:output_type -> gora.v1.AddInterfaceResponse
+	6,  // 16: gora.v1.GoRAService.DeleteInterface:output_type -> gora.v1.DeleteInterfaceResponse
+	14, // [14:17] is the sub-list for method output_type
+	11, // [11:14] is the sub-list for method input_type
+	11, // [11:11] is the sub-list for extension type_name
+	11, // [11:11] is the sub-list for extension extendee
+	0,  // [0:11] is the sub-list for field type_name
 }
 
 func init() { file_api_gora_v1_gora_proto_init() }
@@ -258,7 +988,7 @@ func file_api_gora_v1_gora_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_api_gora_v1_gora_proto_rawDesc), len(file_api_gora_v1_gora_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   3,
+			NumMessages:   13,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

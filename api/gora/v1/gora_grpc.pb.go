@@ -22,7 +22,9 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	GoRAService_GetStatus_FullMethodName = "/gora.v1.GoRAService/GetStatus"
+	GoRAService_GetStatus_FullMethodName       = "/gora.v1.GoRAService/GetStatus"
+	GoRAService_AddInterface_FullMethodName    = "/gora.v1.GoRAService/AddInterface"
+	GoRAService_DeleteInterface_FullMethodName = "/gora.v1.GoRAService/DeleteInterface"
 )
 
 // GoRAServiceClient is the client API for GoRAService service.
@@ -30,6 +32,8 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type GoRAServiceClient interface {
 	GetStatus(ctx context.Context, in *GetStatusRequest, opts ...grpc.CallOption) (*GetStatusResponse, error)
+	AddInterface(ctx context.Context, in *AddInterfaceRequest, opts ...grpc.CallOption) (*AddInterfaceResponse, error)
+	DeleteInterface(ctx context.Context, in *DeleteInterfaceRequest, opts ...grpc.CallOption) (*DeleteInterfaceResponse, error)
 }
 
 type goRAServiceClient struct {
@@ -50,11 +54,33 @@ func (c *goRAServiceClient) GetStatus(ctx context.Context, in *GetStatusRequest,
 	return out, nil
 }
 
+func (c *goRAServiceClient) AddInterface(ctx context.Context, in *AddInterfaceRequest, opts ...grpc.CallOption) (*AddInterfaceResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(AddInterfaceResponse)
+	err := c.cc.Invoke(ctx, GoRAService_AddInterface_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *goRAServiceClient) DeleteInterface(ctx context.Context, in *DeleteInterfaceRequest, opts ...grpc.CallOption) (*DeleteInterfaceResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DeleteInterfaceResponse)
+	err := c.cc.Invoke(ctx, GoRAService_DeleteInterface_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // GoRAServiceServer is the server API for GoRAService service.
 // All implementations must embed UnimplementedGoRAServiceServer
 // for forward compatibility.
 type GoRAServiceServer interface {
 	GetStatus(context.Context, *GetStatusRequest) (*GetStatusResponse, error)
+	AddInterface(context.Context, *AddInterfaceRequest) (*AddInterfaceResponse, error)
+	DeleteInterface(context.Context, *DeleteInterfaceRequest) (*DeleteInterfaceResponse, error)
 	mustEmbedUnimplementedGoRAServiceServer()
 }
 
@@ -67,6 +93,12 @@ type UnimplementedGoRAServiceServer struct{}
 
 func (UnimplementedGoRAServiceServer) GetStatus(context.Context, *GetStatusRequest) (*GetStatusResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetStatus not implemented")
+}
+func (UnimplementedGoRAServiceServer) AddInterface(context.Context, *AddInterfaceRequest) (*AddInterfaceResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method AddInterface not implemented")
+}
+func (UnimplementedGoRAServiceServer) DeleteInterface(context.Context, *DeleteInterfaceRequest) (*DeleteInterfaceResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method DeleteInterface not implemented")
 }
 func (UnimplementedGoRAServiceServer) mustEmbedUnimplementedGoRAServiceServer() {}
 func (UnimplementedGoRAServiceServer) testEmbeddedByValue()                     {}
@@ -107,6 +139,42 @@ func _GoRAService_GetStatus_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
+func _GoRAService_AddInterface_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AddInterfaceRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GoRAServiceServer).AddInterface(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: GoRAService_AddInterface_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GoRAServiceServer).AddInterface(ctx, req.(*AddInterfaceRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _GoRAService_DeleteInterface_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteInterfaceRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GoRAServiceServer).DeleteInterface(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: GoRAService_DeleteInterface_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GoRAServiceServer).DeleteInterface(ctx, req.(*DeleteInterfaceRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // GoRAService_ServiceDesc is the grpc.ServiceDesc for GoRAService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -117,6 +185,14 @@ var GoRAService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetStatus",
 			Handler:    _GoRAService_GetStatus_Handler,
+		},
+		{
+			MethodName: "AddInterface",
+			Handler:    _GoRAService_AddInterface_Handler,
+		},
+		{
+			MethodName: "DeleteInterface",
+			Handler:    _GoRAService_DeleteInterface_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

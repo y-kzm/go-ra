@@ -5,6 +5,7 @@ package ra
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"sort"
 	"sync"
@@ -21,6 +22,9 @@ type Daemon struct {
 
 	advertisers     map[int]*advertiser
 	advertisersLock sync.RWMutex
+
+	currentConfig   *Config
+	currentConfigMu sync.RWMutex
 }
 
 // NewDaemon creates a new Daemon instance with the provided configuration and
@@ -42,6 +46,7 @@ func NewDaemon(config *Config, opts ...DaemonOption) (*Daemon, error) {
 		socketConstructor: newSocket,
 		deviceWatcher:     newDeviceWatcher(),
 		advertisers:       map[int]*advertiser{},
+		currentConfig:     c,
 	}
 
 	for _, opt := range opts {
@@ -122,6 +127,9 @@ reload:
 			case newConfig := <-d.reloadCh:
 				d.logger.Info("Reloading configuration")
 				config = newConfig
+				d.currentConfigMu.Lock()
+				d.currentConfig = newConfig
+				d.currentConfigMu.Unlock()
 				continue reload
 			case <-ctx.Done():
 				d.logger.Info("Shutting down daemon")
@@ -153,6 +161,40 @@ func (d *Daemon) Reload(ctx context.Context, newConfig *Config) error {
 	}
 
 	return nil
+}
+
+// AddInterface adds a new interface configuration to the daemon. It returns
+// ValidationErrors if the resulting configuration is invalid.
+func (d *Daemon) AddInterface(ctx context.Context, ifaceConfig *InterfaceConfig) error {
+	d.currentConfigMu.RLock()
+	newConfig := d.currentConfig.deepCopy()
+	d.currentConfigMu.RUnlock()
+
+	newConfig.Interfaces = append(newConfig.Interfaces, ifaceConfig)
+	return d.Reload(ctx, newConfig)
+}
+
+// DeleteInterface removes the interface configuration with the given ID from
+// the daemon. It returns an error if no interface with the given ID exists.
+func (d *Daemon) DeleteInterface(ctx context.Context, id int) error {
+	d.currentConfigMu.RLock()
+	newConfig := d.currentConfig.deepCopy()
+	d.currentConfigMu.RUnlock()
+
+	found := false
+	interfaces := make([]*InterfaceConfig, 0, len(newConfig.Interfaces))
+	for _, iface := range newConfig.Interfaces {
+		if iface.ID == id {
+			found = true
+			continue
+		}
+		interfaces = append(interfaces, iface)
+	}
+	if !found {
+		return fmt.Errorf("interface with id %d not found", id)
+	}
+	newConfig.Interfaces = interfaces
+	return d.Reload(ctx, newConfig)
 }
 
 // Status returns the current status of the daemon

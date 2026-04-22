@@ -5,11 +5,17 @@ syntax = "proto3";
 
 package gora.v1;
 
+import "google/protobuf/wrappers.proto";
+
 option go_package = "github.com/YutaroHayakawa/go-ra/api/gora/v1;gorav1";
 
 service GoRAService {
   rpc GetStatus(GetStatusRequest) returns (GetStatusResponse);
+  rpc AddInterface(AddInterfaceRequest) returns (AddInterfaceResponse);
+  rpc DeleteInterface(DeleteInterfaceRequest) returns (DeleteInterfaceResponse);
 }
+
+// GetStatus
 
 message GetStatusRequest {}
 
@@ -25,4 +31,77 @@ message InterfaceStatus {
   int64  last_update      = 5;
   int32  tx_solicited_ra  = 6;
   int32  tx_unsolicited_ra = 7;
+}
+
+// AddInterface
+
+message AddInterfaceRequest {
+  InterfaceConfig interface = 1;
+}
+
+message AddInterfaceResponse {}
+
+// DeleteInterface
+
+message DeleteInterfaceRequest {
+  int32 id = 1;
+}
+
+message DeleteInterfaceResponse {}
+
+// Config messages
+
+message InterfaceConfig {
+  int32  id          = 1;
+  string description = 2;
+  string name        = 3;
+
+  int32  ra_interval_milliseconds     = 4;
+  int32  current_hop_limit            = 5;
+  bool   managed                      = 6;
+  bool   other                        = 7;
+  string preference                   = 8;
+  int32  router_lifetime_seconds      = 9;
+  int64  reachable_time_milliseconds  = 10;
+  int64  retransmit_time_milliseconds = 11;
+  int64  mtu                          = 12;
+
+  repeated PrefixConfig      prefixes       = 13;
+  repeated RouteConfig       routes         = 14;
+  repeated RdnssConfig       rdnsses        = 15;
+  repeated DnsslConfig       dnssls         = 16;
+  repeated Nat64PrefixConfig nat64_prefixes = 17;
+
+  repeated string            clients         = 18;
+  google.protobuf.BoolValue  send_goodbye    = 19;
+  bool                       disable_rs_reply = 20;
+}
+
+message PrefixConfig {
+  string                     prefix                     = 1;
+  bool                       on_link                    = 2;
+  bool                       autonomous                 = 3;
+  google.protobuf.Int64Value valid_lifetime_seconds     = 4;
+  google.protobuf.Int64Value preferred_lifetime_seconds = 5;
+}
+
+message RouteConfig {
+  string prefix           = 1;
+  int64  lifetime_seconds = 2;
+  string preference       = 3;
+}
+
+message RdnssConfig {
+  int64           lifetime_seconds = 1;
+  repeated string addresses        = 2;
+}
+
+message DnsslConfig {
+  int64           lifetime_seconds = 1;
+  repeated string domain_names     = 2;
+}
+
+message Nat64PrefixConfig {
+  string                     prefix           = 1;
+  google.protobuf.Int64Value lifetime_seconds = 2;
 }

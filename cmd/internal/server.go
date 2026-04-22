@@ -11,6 +11,8 @@ import (
 	ra "github.com/YutaroHayakawa/go-ra"
 	gorav1 "github.com/YutaroHayakawa/go-ra/api/gora/v1"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type goraServer struct {
@@ -34,6 +36,21 @@ func NewGRPCServer(addr string, daemon *ra.Daemon, logger *slog.Logger) (*grpc.S
 	})
 
 	return srv, lis, nil
+}
+
+func (s *goraServer) AddInterface(ctx context.Context, req *gorav1.AddInterfaceRequest) (*gorav1.AddInterfaceResponse, error) {
+	ifaceConfig := InterfaceConfigFromProto(req.Interface)
+	if err := s.daemon.AddInterface(ctx, ifaceConfig); err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+	return &gorav1.AddInterfaceResponse{}, nil
+}
+
+func (s *goraServer) DeleteInterface(ctx context.Context, req *gorav1.DeleteInterfaceRequest) (*gorav1.DeleteInterfaceResponse, error) {
+	if err := s.daemon.DeleteInterface(ctx, int(req.Id)); err != nil {
+		return nil, status.Errorf(codes.NotFound, "%v", err)
+	}
+	return &gorav1.DeleteInterfaceResponse{}, nil
 }
 
 func (s *goraServer) GetStatus(ctx context.Context, _ *gorav1.GetStatusRequest) (*gorav1.GetStatusResponse, error) {
