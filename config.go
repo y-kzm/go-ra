@@ -105,6 +105,10 @@ type InterfaceConfig struct {
 	// If true, send a final RA with RouterLifetime=0 and all option lifetimes
 	// zeroed before stopping, to notify hosts that this router is no longer available.
 	SendGoodbye *bool `yaml:"sendGoodbye" json:"sendGoodbye" default:"true"`
+
+	// If true, do not send a solicited RA in response to Router Solicitations.
+	// Recommended when Clients is set, to restrict RA transmission to the specified clients only.
+	DisableRSReply bool `yaml:"disableRSReply" json:"disableRSReply"`
 }
 
 // PrefixConfig represents the prefix-specific configuration parameters

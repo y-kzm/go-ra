@@ -72,8 +72,13 @@ interfaces:
   # List of clients to send unicast RA to.
   # NOTE: if specified, unicast RA is sent to each address instead of multicast to all-nodes
   # NOTE: only link-local addresses (fe80::/10) are allowed
+  # RECOMMENDED: set disableRSReply: true together to restrict RA to the specified clients only
   clients:
   - "fe80::1"
+
+  # If true, do not reply to Router Solicitations.
+  # RECOMMENDED: enable this when clients is set
+  disableRSReply: false
 
   # If true, send a final RA with RouterLifetime=0 and all option lifetimes zeroed on stop.
   sendGoodbye: true

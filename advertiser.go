@@ -308,6 +308,9 @@ reload:
 		for {
 			select {
 			case rs := <-rsCh:
+				if config.DisableRSReply {
+					continue
+				}
 				// Reply to RS
 				//
 				// TODO: Rate limit this to mitigate RS flooding attack
