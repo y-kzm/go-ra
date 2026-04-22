@@ -277,6 +277,86 @@ func (*AddInterfaceResponse) Descriptor() ([]byte, []int) {
 	return file_api_gora_v1_gora_proto_rawDescGZIP(), []int{4}
 }
 
+type UpdateInterfaceRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Interface     *InterfaceConfig       `protobuf:"bytes,1,opt,name=interface,proto3" json:"interface,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdateInterfaceRequest) Reset() {
+	*x = UpdateInterfaceRequest{}
+	mi := &file_api_gora_v1_gora_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateInterfaceRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateInterfaceRequest) ProtoMessage() {}
+
+func (x *UpdateInterfaceRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_api_gora_v1_gora_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateInterfaceRequest.ProtoReflect.Descriptor instead.
+func (*UpdateInterfaceRequest) Descriptor() ([]byte, []int) {
+	return file_api_gora_v1_gora_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *UpdateInterfaceRequest) GetInterface() *InterfaceConfig {
+	if x != nil {
+		return x.Interface
+	}
+	return nil
+}
+
+type UpdateInterfaceResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdateInterfaceResponse) Reset() {
+	*x = UpdateInterfaceResponse{}
+	mi := &file_api_gora_v1_gora_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateInterfaceResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateInterfaceResponse) ProtoMessage() {}
+
+func (x *UpdateInterfaceResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_api_gora_v1_gora_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateInterfaceResponse.ProtoReflect.Descriptor instead.
+func (*UpdateInterfaceResponse) Descriptor() ([]byte, []int) {
+	return file_api_gora_v1_gora_proto_rawDescGZIP(), []int{6}
+}
+
 type DeleteInterfaceRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            int32                  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
@@ -286,7 +366,7 @@ type DeleteInterfaceRequest struct {
 
 func (x *DeleteInterfaceRequest) Reset() {
 	*x = DeleteInterfaceRequest{}
-	mi := &file_api_gora_v1_gora_proto_msgTypes[5]
+	mi := &file_api_gora_v1_gora_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -298,7 +378,7 @@ func (x *DeleteInterfaceRequest) String() string {
 func (*DeleteInterfaceRequest) ProtoMessage() {}
 
 func (x *DeleteInterfaceRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_gora_v1_gora_proto_msgTypes[5]
+	mi := &file_api_gora_v1_gora_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -311,7 +391,7 @@ func (x *DeleteInterfaceRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteInterfaceRequest.ProtoReflect.Descriptor instead.
 func (*DeleteInterfaceRequest) Descriptor() ([]byte, []int) {
-	return file_api_gora_v1_gora_proto_rawDescGZIP(), []int{5}
+	return file_api_gora_v1_gora_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *DeleteInterfaceRequest) GetId() int32 {
@@ -329,7 +409,7 @@ type DeleteInterfaceResponse struct {
 
 func (x *DeleteInterfaceResponse) Reset() {
 	*x = DeleteInterfaceResponse{}
-	mi := &file_api_gora_v1_gora_proto_msgTypes[6]
+	mi := &file_api_gora_v1_gora_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -341,7 +421,7 @@ func (x *DeleteInterfaceResponse) String() string {
 func (*DeleteInterfaceResponse) ProtoMessage() {}
 
 func (x *DeleteInterfaceResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_api_gora_v1_gora_proto_msgTypes[6]
+	mi := &file_api_gora_v1_gora_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -354,7 +434,7 @@ func (x *DeleteInterfaceResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteInterfaceResponse.ProtoReflect.Descriptor instead.
 func (*DeleteInterfaceResponse) Descriptor() ([]byte, []int) {
-	return file_api_gora_v1_gora_proto_rawDescGZIP(), []int{6}
+	return file_api_gora_v1_gora_proto_rawDescGZIP(), []int{8}
 }
 
 type InterfaceConfig struct {
@@ -385,7 +465,7 @@ type InterfaceConfig struct {
 
 func (x *InterfaceConfig) Reset() {
 	*x = InterfaceConfig{}
-	mi := &file_api_gora_v1_gora_proto_msgTypes[7]
+	mi := &file_api_gora_v1_gora_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -397,7 +477,7 @@ func (x *InterfaceConfig) String() string {
 func (*InterfaceConfig) ProtoMessage() {}
 
 func (x *InterfaceConfig) ProtoReflect() protoreflect.Message {
-	mi := &file_api_gora_v1_gora_proto_msgTypes[7]
+	mi := &file_api_gora_v1_gora_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -410,7 +490,7 @@ func (x *InterfaceConfig) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use InterfaceConfig.ProtoReflect.Descriptor instead.
 func (*InterfaceConfig) Descriptor() ([]byte, []int) {
-	return file_api_gora_v1_gora_proto_rawDescGZIP(), []int{7}
+	return file_api_gora_v1_gora_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *InterfaceConfig) GetId() int32 {
@@ -566,7 +646,7 @@ type PrefixConfig struct {
 
 func (x *PrefixConfig) Reset() {
 	*x = PrefixConfig{}
-	mi := &file_api_gora_v1_gora_proto_msgTypes[8]
+	mi := &file_api_gora_v1_gora_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -578,7 +658,7 @@ func (x *PrefixConfig) String() string {
 func (*PrefixConfig) ProtoMessage() {}
 
 func (x *PrefixConfig) ProtoReflect() protoreflect.Message {
-	mi := &file_api_gora_v1_gora_proto_msgTypes[8]
+	mi := &file_api_gora_v1_gora_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -591,7 +671,7 @@ func (x *PrefixConfig) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PrefixConfig.ProtoReflect.Descriptor instead.
 func (*PrefixConfig) Descriptor() ([]byte, []int) {
-	return file_api_gora_v1_gora_proto_rawDescGZIP(), []int{8}
+	return file_api_gora_v1_gora_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *PrefixConfig) GetPrefix() string {
@@ -640,7 +720,7 @@ type RouteConfig struct {
 
 func (x *RouteConfig) Reset() {
 	*x = RouteConfig{}
-	mi := &file_api_gora_v1_gora_proto_msgTypes[9]
+	mi := &file_api_gora_v1_gora_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -652,7 +732,7 @@ func (x *RouteConfig) String() string {
 func (*RouteConfig) ProtoMessage() {}
 
 func (x *RouteConfig) ProtoReflect() protoreflect.Message {
-	mi := &file_api_gora_v1_gora_proto_msgTypes[9]
+	mi := &file_api_gora_v1_gora_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -665,7 +745,7 @@ func (x *RouteConfig) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RouteConfig.ProtoReflect.Descriptor instead.
 func (*RouteConfig) Descriptor() ([]byte, []int) {
-	return file_api_gora_v1_gora_proto_rawDescGZIP(), []int{9}
+	return file_api_gora_v1_gora_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *RouteConfig) GetPrefix() string {
@@ -699,7 +779,7 @@ type RdnssConfig struct {
 
 func (x *RdnssConfig) Reset() {
 	*x = RdnssConfig{}
-	mi := &file_api_gora_v1_gora_proto_msgTypes[10]
+	mi := &file_api_gora_v1_gora_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -711,7 +791,7 @@ func (x *RdnssConfig) String() string {
 func (*RdnssConfig) ProtoMessage() {}
 
 func (x *RdnssConfig) ProtoReflect() protoreflect.Message {
-	mi := &file_api_gora_v1_gora_proto_msgTypes[10]
+	mi := &file_api_gora_v1_gora_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -724,7 +804,7 @@ func (x *RdnssConfig) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RdnssConfig.ProtoReflect.Descriptor instead.
 func (*RdnssConfig) Descriptor() ([]byte, []int) {
-	return file_api_gora_v1_gora_proto_rawDescGZIP(), []int{10}
+	return file_api_gora_v1_gora_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *RdnssConfig) GetLifetimeSeconds() int64 {
@@ -751,7 +831,7 @@ type DnsslConfig struct {
 
 func (x *DnsslConfig) Reset() {
 	*x = DnsslConfig{}
-	mi := &file_api_gora_v1_gora_proto_msgTypes[11]
+	mi := &file_api_gora_v1_gora_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -763,7 +843,7 @@ func (x *DnsslConfig) String() string {
 func (*DnsslConfig) ProtoMessage() {}
 
 func (x *DnsslConfig) ProtoReflect() protoreflect.Message {
-	mi := &file_api_gora_v1_gora_proto_msgTypes[11]
+	mi := &file_api_gora_v1_gora_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -776,7 +856,7 @@ func (x *DnsslConfig) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DnsslConfig.ProtoReflect.Descriptor instead.
 func (*DnsslConfig) Descriptor() ([]byte, []int) {
-	return file_api_gora_v1_gora_proto_rawDescGZIP(), []int{11}
+	return file_api_gora_v1_gora_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *DnsslConfig) GetLifetimeSeconds() int64 {
@@ -803,7 +883,7 @@ type Nat64PrefixConfig struct {
 
 func (x *Nat64PrefixConfig) Reset() {
 	*x = Nat64PrefixConfig{}
-	mi := &file_api_gora_v1_gora_proto_msgTypes[12]
+	mi := &file_api_gora_v1_gora_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -815,7 +895,7 @@ func (x *Nat64PrefixConfig) String() string {
 func (*Nat64PrefixConfig) ProtoMessage() {}
 
 func (x *Nat64PrefixConfig) ProtoReflect() protoreflect.Message {
-	mi := &file_api_gora_v1_gora_proto_msgTypes[12]
+	mi := &file_api_gora_v1_gora_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -828,7 +908,7 @@ func (x *Nat64PrefixConfig) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Nat64PrefixConfig.ProtoReflect.Descriptor instead.
 func (*Nat64PrefixConfig) Descriptor() ([]byte, []int) {
-	return file_api_gora_v1_gora_proto_rawDescGZIP(), []int{12}
+	return file_api_gora_v1_gora_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *Nat64PrefixConfig) GetPrefix() string {
@@ -866,7 +946,10 @@ const file_api_gora_v1_gora_proto_rawDesc = "" +
 	"\x11tx_unsolicited_ra\x18\a \x01(\x05R\x0ftxUnsolicitedRa\"M\n" +
 	"\x13AddInterfaceRequest\x126\n" +
 	"\tinterface\x18\x01 \x01(\v2\x18.gora.v1.InterfaceConfigR\tinterface\"\x16\n" +
-	"\x14AddInterfaceResponse\"(\n" +
+	"\x14AddInterfaceResponse\"P\n" +
+	"\x16UpdateInterfaceRequest\x126\n" +
+	"\tinterface\x18\x01 \x01(\v2\x18.gora.v1.InterfaceConfigR\tinterface\"\x19\n" +
+	"\x17UpdateInterfaceResponse\"(\n" +
 	"\x16DeleteInterfaceRequest\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x05R\x02id\"\x19\n" +
 	"\x17DeleteInterfaceResponse\"\xde\x06\n" +
@@ -916,10 +999,11 @@ const file_api_gora_v1_gora_proto_rawDesc = "" +
 	"\fdomain_names\x18\x02 \x03(\tR\vdomainNames\"s\n" +
 	"\x11Nat64PrefixConfig\x12\x16\n" +
 	"\x06prefix\x18\x01 \x01(\tR\x06prefix\x12F\n" +
-	"\x10lifetime_seconds\x18\x02 \x01(\v2\x1b.google.protobuf.Int64ValueR\x0flifetimeSeconds2\xf4\x01\n" +
+	"\x10lifetime_seconds\x18\x02 \x01(\v2\x1b.google.protobuf.Int64ValueR\x0flifetimeSeconds2\xca\x02\n" +
 	"\vGoRAService\x12B\n" +
 	"\tGetStatus\x12\x19.gora.v1.GetStatusRequest\x1a\x1a.gora.v1.GetStatusResponse\x12K\n" +
 	"\fAddInterface\x12\x1c.gora.v1.AddInterfaceRequest\x1a\x1d.gora.v1.AddInterfaceResponse\x12T\n" +
+	"\x0fUpdateInterface\x12\x1f.gora.v1.UpdateInterfaceRequest\x1a .gora.v1.UpdateInterfaceResponse\x12T\n" +
 	"\x0fDeleteInterface\x12\x1f.gora.v1.DeleteInterfaceRequest\x1a .gora.v1.DeleteInterfaceResponseB4Z2github.com/YutaroHayakawa/go-ra/api/gora/v1;gorav1b\x06proto3"
 
 var (
@@ -934,47 +1018,52 @@ func file_api_gora_v1_gora_proto_rawDescGZIP() []byte {
 	return file_api_gora_v1_gora_proto_rawDescData
 }
 
-var file_api_gora_v1_gora_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
+var file_api_gora_v1_gora_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
 var file_api_gora_v1_gora_proto_goTypes = []any{
 	(*GetStatusRequest)(nil),        // 0: gora.v1.GetStatusRequest
 	(*GetStatusResponse)(nil),       // 1: gora.v1.GetStatusResponse
 	(*InterfaceStatus)(nil),         // 2: gora.v1.InterfaceStatus
 	(*AddInterfaceRequest)(nil),     // 3: gora.v1.AddInterfaceRequest
 	(*AddInterfaceResponse)(nil),    // 4: gora.v1.AddInterfaceResponse
-	(*DeleteInterfaceRequest)(nil),  // 5: gora.v1.DeleteInterfaceRequest
-	(*DeleteInterfaceResponse)(nil), // 6: gora.v1.DeleteInterfaceResponse
-	(*InterfaceConfig)(nil),         // 7: gora.v1.InterfaceConfig
-	(*PrefixConfig)(nil),            // 8: gora.v1.PrefixConfig
-	(*RouteConfig)(nil),             // 9: gora.v1.RouteConfig
-	(*RdnssConfig)(nil),             // 10: gora.v1.RdnssConfig
-	(*DnsslConfig)(nil),             // 11: gora.v1.DnsslConfig
-	(*Nat64PrefixConfig)(nil),       // 12: gora.v1.Nat64PrefixConfig
-	(*wrapperspb.BoolValue)(nil),    // 13: google.protobuf.BoolValue
-	(*wrapperspb.Int64Value)(nil),   // 14: google.protobuf.Int64Value
+	(*UpdateInterfaceRequest)(nil),  // 5: gora.v1.UpdateInterfaceRequest
+	(*UpdateInterfaceResponse)(nil), // 6: gora.v1.UpdateInterfaceResponse
+	(*DeleteInterfaceRequest)(nil),  // 7: gora.v1.DeleteInterfaceRequest
+	(*DeleteInterfaceResponse)(nil), // 8: gora.v1.DeleteInterfaceResponse
+	(*InterfaceConfig)(nil),         // 9: gora.v1.InterfaceConfig
+	(*PrefixConfig)(nil),            // 10: gora.v1.PrefixConfig
+	(*RouteConfig)(nil),             // 11: gora.v1.RouteConfig
+	(*RdnssConfig)(nil),             // 12: gora.v1.RdnssConfig
+	(*DnsslConfig)(nil),             // 13: gora.v1.DnsslConfig
+	(*Nat64PrefixConfig)(nil),       // 14: gora.v1.Nat64PrefixConfig
+	(*wrapperspb.BoolValue)(nil),    // 15: google.protobuf.BoolValue
+	(*wrapperspb.Int64Value)(nil),   // 16: google.protobuf.Int64Value
 }
 var file_api_gora_v1_gora_proto_depIdxs = []int32{
 	2,  // 0: gora.v1.GetStatusResponse.interfaces:type_name -> gora.v1.InterfaceStatus
-	7,  // 1: gora.v1.AddInterfaceRequest.interface:type_name -> gora.v1.InterfaceConfig
-	8,  // 2: gora.v1.InterfaceConfig.prefixes:type_name -> gora.v1.PrefixConfig
-	9,  // 3: gora.v1.InterfaceConfig.routes:type_name -> gora.v1.RouteConfig
-	10, // 4: gora.v1.InterfaceConfig.rdnsses:type_name -> gora.v1.RdnssConfig
-	11, // 5: gora.v1.InterfaceConfig.dnssls:type_name -> gora.v1.DnsslConfig
-	12, // 6: gora.v1.InterfaceConfig.nat64_prefixes:type_name -> gora.v1.Nat64PrefixConfig
-	13, // 7: gora.v1.InterfaceConfig.send_goodbye:type_name -> google.protobuf.BoolValue
-	14, // 8: gora.v1.PrefixConfig.valid_lifetime_seconds:type_name -> google.protobuf.Int64Value
-	14, // 9: gora.v1.PrefixConfig.preferred_lifetime_seconds:type_name -> google.protobuf.Int64Value
-	14, // 10: gora.v1.Nat64PrefixConfig.lifetime_seconds:type_name -> google.protobuf.Int64Value
-	0,  // 11: gora.v1.GoRAService.GetStatus:input_type -> gora.v1.GetStatusRequest
-	3,  // 12: gora.v1.GoRAService.AddInterface:input_type -> gora.v1.AddInterfaceRequest
-	5,  // 13: gora.v1.GoRAService.DeleteInterface:input_type -> gora.v1.DeleteInterfaceRequest
-	1,  // 14: gora.v1.GoRAService.GetStatus:output_type -> gora.v1.GetStatusResponse
-	4,  // 15: gora.v1.GoRAService.AddInterface:output_type -> gora.v1.AddInterfaceResponse
-	6,  // 16: gora.v1.GoRAService.DeleteInterface:output_type -> gora.v1.DeleteInterfaceResponse
-	14, // [14:17] is the sub-list for method output_type
-	11, // [11:14] is the sub-list for method input_type
-	11, // [11:11] is the sub-list for extension type_name
-	11, // [11:11] is the sub-list for extension extendee
-	0,  // [0:11] is the sub-list for field type_name
+	9,  // 1: gora.v1.AddInterfaceRequest.interface:type_name -> gora.v1.InterfaceConfig
+	9,  // 2: gora.v1.UpdateInterfaceRequest.interface:type_name -> gora.v1.InterfaceConfig
+	10, // 3: gora.v1.InterfaceConfig.prefixes:type_name -> gora.v1.PrefixConfig
+	11, // 4: gora.v1.InterfaceConfig.routes:type_name -> gora.v1.RouteConfig
+	12, // 5: gora.v1.InterfaceConfig.rdnsses:type_name -> gora.v1.RdnssConfig
+	13, // 6: gora.v1.InterfaceConfig.dnssls:type_name -> gora.v1.DnsslConfig
+	14, // 7: gora.v1.InterfaceConfig.nat64_prefixes:type_name -> gora.v1.Nat64PrefixConfig
+	15, // 8: gora.v1.InterfaceConfig.send_goodbye:type_name -> google.protobuf.BoolValue
+	16, // 9: gora.v1.PrefixConfig.valid_lifetime_seconds:type_name -> google.protobuf.Int64Value
+	16, // 10: gora.v1.PrefixConfig.preferred_lifetime_seconds:type_name -> google.protobuf.Int64Value
+	16, // 11: gora.v1.Nat64PrefixConfig.lifetime_seconds:type_name -> google.protobuf.Int64Value
+	0,  // 12: gora.v1.GoRAService.GetStatus:input_type -> gora.v1.GetStatusRequest
+	3,  // 13: gora.v1.GoRAService.AddInterface:input_type -> gora.v1.AddInterfaceRequest
+	5,  // 14: gora.v1.GoRAService.UpdateInterface:input_type -> gora.v1.UpdateInterfaceRequest
+	7,  // 15: gora.v1.GoRAService.DeleteInterface:input_type -> gora.v1.DeleteInterfaceRequest
+	1,  // 16: gora.v1.GoRAService.GetStatus:output_type -> gora.v1.GetStatusResponse
+	4,  // 17: gora.v1.GoRAService.AddInterface:output_type -> gora.v1.AddInterfaceResponse
+	6,  // 18: gora.v1.GoRAService.UpdateInterface:output_type -> gora.v1.UpdateInterfaceResponse
+	8,  // 19: gora.v1.GoRAService.DeleteInterface:output_type -> gora.v1.DeleteInterfaceResponse
+	16, // [16:20] is the sub-list for method output_type
+	12, // [12:16] is the sub-list for method input_type
+	12, // [12:12] is the sub-list for extension type_name
+	12, // [12:12] is the sub-list for extension extendee
+	0,  // [0:12] is the sub-list for field type_name
 }
 
 func init() { file_api_gora_v1_gora_proto_init() }
@@ -988,7 +1077,7 @@ func file_api_gora_v1_gora_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_api_gora_v1_gora_proto_rawDesc), len(file_api_gora_v1_gora_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   13,
+			NumMessages:   15,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

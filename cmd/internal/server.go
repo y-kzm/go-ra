@@ -5,6 +5,7 @@ package internal
 
 import (
 	"context"
+	"errors"
 	"log/slog"
 	"net"
 
@@ -44,6 +45,18 @@ func (s *goraServer) AddInterface(ctx context.Context, req *gorav1.AddInterfaceR
 		return nil, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 	return &gorav1.AddInterfaceResponse{}, nil
+}
+
+func (s *goraServer) UpdateInterface(ctx context.Context, req *gorav1.UpdateInterfaceRequest) (*gorav1.UpdateInterfaceResponse, error) {
+	ifaceConfig := InterfaceConfigFromProto(req.Interface)
+	if err := s.daemon.UpdateInterface(ctx, ifaceConfig); err != nil {
+		var verrs ra.ValidationErrors
+		if errors.As(err, &verrs) {
+			return nil, status.Errorf(codes.InvalidArgument, "%v", err)
+		}
+		return nil, status.Errorf(codes.NotFound, "%v", err)
+	}
+	return &gorav1.UpdateInterfaceResponse{}, nil
 }
 
 func (s *goraServer) DeleteInterface(ctx context.Context, req *gorav1.DeleteInterfaceRequest) (*gorav1.DeleteInterfaceResponse, error) {

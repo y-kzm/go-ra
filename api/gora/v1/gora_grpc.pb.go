@@ -24,6 +24,7 @@ const _ = grpc.SupportPackageIsVersion9
 const (
 	GoRAService_GetStatus_FullMethodName       = "/gora.v1.GoRAService/GetStatus"
 	GoRAService_AddInterface_FullMethodName    = "/gora.v1.GoRAService/AddInterface"
+	GoRAService_UpdateInterface_FullMethodName = "/gora.v1.GoRAService/UpdateInterface"
 	GoRAService_DeleteInterface_FullMethodName = "/gora.v1.GoRAService/DeleteInterface"
 )
 
@@ -33,6 +34,7 @@ const (
 type GoRAServiceClient interface {
 	GetStatus(ctx context.Context, in *GetStatusRequest, opts ...grpc.CallOption) (*GetStatusResponse, error)
 	AddInterface(ctx context.Context, in *AddInterfaceRequest, opts ...grpc.CallOption) (*AddInterfaceResponse, error)
+	UpdateInterface(ctx context.Context, in *UpdateInterfaceRequest, opts ...grpc.CallOption) (*UpdateInterfaceResponse, error)
 	DeleteInterface(ctx context.Context, in *DeleteInterfaceRequest, opts ...grpc.CallOption) (*DeleteInterfaceResponse, error)
 }
 
@@ -64,6 +66,16 @@ func (c *goRAServiceClient) AddInterface(ctx context.Context, in *AddInterfaceRe
 	return out, nil
 }
 
+func (c *goRAServiceClient) UpdateInterface(ctx context.Context, in *UpdateInterfaceRequest, opts ...grpc.CallOption) (*UpdateInterfaceResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UpdateInterfaceResponse)
+	err := c.cc.Invoke(ctx, GoRAService_UpdateInterface_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *goRAServiceClient) DeleteInterface(ctx context.Context, in *DeleteInterfaceRequest, opts ...grpc.CallOption) (*DeleteInterfaceResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(DeleteInterfaceResponse)
@@ -80,6 +92,7 @@ func (c *goRAServiceClient) DeleteInterface(ctx context.Context, in *DeleteInter
 type GoRAServiceServer interface {
 	GetStatus(context.Context, *GetStatusRequest) (*GetStatusResponse, error)
 	AddInterface(context.Context, *AddInterfaceRequest) (*AddInterfaceResponse, error)
+	UpdateInterface(context.Context, *UpdateInterfaceRequest) (*UpdateInterfaceResponse, error)
 	DeleteInterface(context.Context, *DeleteInterfaceRequest) (*DeleteInterfaceResponse, error)
 	mustEmbedUnimplementedGoRAServiceServer()
 }
@@ -96,6 +109,9 @@ func (UnimplementedGoRAServiceServer) GetStatus(context.Context, *GetStatusReque
 }
 func (UnimplementedGoRAServiceServer) AddInterface(context.Context, *AddInterfaceRequest) (*AddInterfaceResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method AddInterface not implemented")
+}
+func (UnimplementedGoRAServiceServer) UpdateInterface(context.Context, *UpdateInterfaceRequest) (*UpdateInterfaceResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method UpdateInterface not implemented")
 }
 func (UnimplementedGoRAServiceServer) DeleteInterface(context.Context, *DeleteInterfaceRequest) (*DeleteInterfaceResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method DeleteInterface not implemented")
@@ -157,6 +173,24 @@ func _GoRAService_AddInterface_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
+func _GoRAService_UpdateInterface_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateInterfaceRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GoRAServiceServer).UpdateInterface(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: GoRAService_UpdateInterface_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GoRAServiceServer).UpdateInterface(ctx, req.(*UpdateInterfaceRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _GoRAService_DeleteInterface_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(DeleteInterfaceRequest)
 	if err := dec(in); err != nil {
@@ -189,6 +223,10 @@ var GoRAService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "AddInterface",
 			Handler:    _GoRAService_AddInterface_Handler,
+		},
+		{
+			MethodName: "UpdateInterface",
+			Handler:    _GoRAService_UpdateInterface_Handler,
 		},
 		{
 			MethodName: "DeleteInterface",

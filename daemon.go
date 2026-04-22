@@ -174,6 +174,28 @@ func (d *Daemon) AddInterface(ctx context.Context, ifaceConfig *InterfaceConfig)
 	return d.Reload(ctx, newConfig)
 }
 
+// UpdateInterface replaces the configuration of an existing interface. It
+// returns an error if no interface with the given ID exists, or ValidationErrors
+// if the resulting configuration is invalid.
+func (d *Daemon) UpdateInterface(ctx context.Context, ifaceConfig *InterfaceConfig) error {
+	d.currentConfigMu.RLock()
+	newConfig := d.currentConfig.deepCopy()
+	d.currentConfigMu.RUnlock()
+
+	found := false
+	for i, iface := range newConfig.Interfaces {
+		if iface.ID == ifaceConfig.ID {
+			newConfig.Interfaces[i] = ifaceConfig
+			found = true
+			break
+		}
+	}
+	if !found {
+		return fmt.Errorf("interface with id %d not found", ifaceConfig.ID)
+	}
+	return d.Reload(ctx, newConfig)
+}
+
 // DeleteInterface removes the interface configuration with the given ID from
 // the daemon. It returns an error if no interface with the given ID exists.
 func (d *Daemon) DeleteInterface(ctx context.Context, id int) error {

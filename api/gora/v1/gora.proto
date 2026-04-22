@@ -12,6 +12,7 @@ option go_package = "github.com/YutaroHayakawa/go-ra/api/gora/v1;gorav1";
 service GoRAService {
   rpc GetStatus(GetStatusRequest) returns (GetStatusResponse);
   rpc AddInterface(AddInterfaceRequest) returns (AddInterfaceResponse);
+  rpc UpdateInterface(UpdateInterfaceRequest) returns (UpdateInterfaceResponse);
   rpc DeleteInterface(DeleteInterfaceRequest) returns (DeleteInterfaceResponse);
 }
 
@@ -40,6 +41,14 @@ message AddInterfaceRequest {
 }
 
 message AddInterfaceResponse {}
+
+// UpdateInterface
+
+message UpdateInterfaceRequest {
+  InterfaceConfig interface = 1;
+}
+
+message UpdateInterfaceResponse {}
 
 // DeleteInterface
 

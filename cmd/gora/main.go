@@ -30,6 +30,7 @@ func usageRoot() {
 	fmt.Println("Subcommands:")
 	fmt.Println("  status\t\tGet the status of the service")
 	fmt.Println("  add-interface\t\tAdd an interface configuration")
+	fmt.Println("  update-interface\tUpdate an existing interface configuration")
 	fmt.Println("  delete-interface\tDelete an interface configuration")
 	fmt.Println("  help\t\t\tShow this message")
 	fmt.Println("  version\t\tShow the version information")
@@ -98,6 +99,32 @@ func main() {
 		return
 	}
 
+	if os.Args[1] == "update-interface" {
+		var (
+			serverAddr string
+			configFile string
+		)
+		command := flag.NewFlagSet("update-interface", flag.ExitOnError)
+		command.StringVar(&serverAddr, "s", "localhost:50051", "gRPC server address")
+		command.StringVar(&configFile, "f", "", "interface config file path (YAML)")
+		command.Parse(os.Args[2:])
+
+		if configFile == "" {
+			fmt.Println("Interface config file path is required (-f)")
+			os.Exit(1)
+		}
+
+		client, err := internal.NewClient(serverAddr)
+		if err != nil {
+			fmt.Printf("Failed to connect to server: %s\n", err.Error())
+			os.Exit(1)
+		}
+		defer client.Close()
+
+		updateInterface(client, configFile)
+		return
+	}
+
 	if os.Args[1] == "delete-interface" {
 		var (
 			serverAddr string
@@ -151,6 +178,31 @@ func addInterface(client *internal.Client, configFile string) {
 	}
 
 	fmt.Println("Successfully added interface.")
+}
+
+func updateInterface(client *internal.Client, configFile string) {
+	f, err := os.Open(configFile)
+	if err != nil {
+		fmt.Printf("Failed to open config file: %s\n", err.Error())
+		os.Exit(1)
+	}
+	defer f.Close()
+
+	var ifaceConfig ra.InterfaceConfig
+	if err := yaml.NewDecoder(f).Decode(&ifaceConfig); err != nil {
+		fmt.Printf("Failed to parse config file: %s\n", err.Error())
+		os.Exit(1)
+	}
+
+	_, err = client.UpdateInterface(context.Background(), &gorav1.UpdateInterfaceRequest{
+		Interface: internal.InterfaceConfigToProto(&ifaceConfig),
+	})
+	if err != nil {
+		fmt.Printf("Failed to update interface: %s\n", err.Error())
+		os.Exit(1)
+	}
+
+	fmt.Println("Successfully updated interface.")
 }
 
 func deleteInterface(client *internal.Client, id int) {
