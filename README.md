@@ -1,4 +1,11 @@
-# go-ra
+# go-ra (fork)
+
+> **Note:** This is a fork of [YutaroHayakawa/go-ra](https://github.com/YutaroHayakawa/go-ra),
+> extended for use as a proof-of-concept in research on dynamic control of Router
+> Advertisement. The fork adds a gRPC API for runtime management of RA instances
+> (add/delete interfaces without daemon restart), multiple RA instances per
+> network interface identified by integer ID, unicast RA, and goodbye RA — with
+> the goal of enabling flexible programmatic control needed for the research.
 
 [![Go Reference](https://pkg.go.dev/badge/github.com/YutaroHayakawa/go-ra.svg)](https://pkg.go.dev/github.com/YutaroHayakawa/go-ra)
 
@@ -21,6 +28,10 @@ declarative configuration interface on top of it.
 - DNS configuration discovery with RDNSS/DNSSL option
 - Route advertisement with Route Information option
 - NAT64 prefix discovery with PREF64 option
+- Unicast RA to specific clients
+- Goodbye RA on daemon stop (RouterLifetime=0 with zeroed option lifetimes)
+- Multiple RA instances per network interface (identified by integer ID)
+- gRPC API for runtime management (`gorad` as server, `gora` as client)
 
 ## Installation
 
@@ -35,13 +46,14 @@ declarative configuration interface on top of it.
 ```go
 // Build a configuration
 config := ra.Config{
-	  Interfaces: []*ra.InterfaceConfig{
-		    {
-			      Name: "eth0",
-			      // Send unsolicited RA once a second
-			      RAIntervalMilliseconds: 1000, // 1sec
-		    },	
-	  },
+	Interfaces: []*ra.InterfaceConfig{
+		{
+			ID:   1,
+			Name: "eth0",
+			// Send unsolicited RA once a second
+			RAIntervalMilliseconds: 1000, // 1sec
+		},
+	},
 }
 
 // Create an RA daemon
@@ -54,51 +66,145 @@ go daemon.Run(ctx)
 // Get a running status
 status := daemon.Status()
 for _, iface := range status.Interfaces {
-    fmt.Printf("%s: %s (%s)\n", iface.Name, iface.State, iface.Message)
+    fmt.Printf("[%d] %s: %s (%s)\n", iface.ID, iface.Name, iface.State, iface.Message)
 }
+
+// Add a new interface at runtime
+err := daemon.AddInterface(ctx, &ra.InterfaceConfig{
+    ID:                     2,
+    Name:                   "eth1",
+    RAIntervalMilliseconds: 1000,
+})
+
+// Remove an interface at runtime
+err = daemon.DeleteInterface(ctx, 2)
 
 // Change configuration and reload
 config.Interfaces[0].RAIntervalMilliseconds = 2000 // 2sec
-err := daemon.Reload(ctx, &config)
+err = daemon.Reload(ctx, &config)
 if err != nil {
     panic(err)
 }
 
-// Stop it
+// Stop it (sends goodbye RA by default)
 cancel()
 ```
 
 ### As a stand-alone daemon
 
-Create a configuration file. This configuration will be translated into the
-[Config](https://pkg.go.dev/github.com/YutaroHayakawa/go-ra#Config) object
-and passed to the daemon. Please see the godoc for more details.
+Create a configuration file. Each interface requires a unique integer `id`.
+Multiple instances on the same network interface are allowed as long as IDs differ.
 
 ```yaml
 interfaces:
-- name: eth0
+- id: 1
+  name: eth0
   raIntervalMilliseconds: 1000 # 1sec
 ```
 
-Start daemon. You need a root privilege to run it.
+Start the daemon. You need root privilege to run it. Use `-a` to set the gRPC
+listen address (default: `localhost:50051`).
 
 ```bash
-
 $ sudo gorad -f config.yaml
+$ sudo gorad -f config.yaml -a 0.0.0.0:50051
 ```
 
-Get status.
+Get status. Use `-s` to specify the server address (default: `localhost:50051`).
 
 ```bash
 $ gora status
-Name         Age    TxUnsolicited    TxSolicited    State      Message
-eth0         22s    21               1              Running
+ID    Name    Age    TxUnsolicited    TxSolicited    State      Message
+1     eth0    22s    21               1              Running
 ```
 
-Modify and reload configuration
+Add an interface at runtime. The file should contain a single interface config
+(without the `interfaces:` wrapper).
+
+```yaml
+# iface.yaml
+id: 2
+name: eth1
+raIntervalMilliseconds: 1000
+```
 
 ```bash
-$ gora reload -f config.yaml
+$ gora add-interface -f iface.yaml
+Successfully added interface.
+```
+
+Delete an interface at runtime.
+
+```bash
+$ gora delete-interface --id 2
+Successfully deleted interface.
+```
+
+## gRPC API
+
+`gorad` exposes a gRPC server. The proto definition is at
+[api/gora/v1/gora.proto](api/gora/v1/gora.proto). Generated Go client code is
+available at `github.com/YutaroHayakawa/go-ra/api/gora/v1`.
+
+### Service
+
+```protobuf
+service GoRAService {
+  rpc GetStatus(GetStatusRequest) returns (GetStatusResponse);
+  rpc AddInterface(AddInterfaceRequest) returns (AddInterfaceResponse);
+  rpc DeleteInterface(DeleteInterfaceRequest) returns (DeleteInterfaceResponse);
+}
+```
+
+### RPCs
+
+| RPC | Description | Error codes |
+|-----|-------------|-------------|
+| `GetStatus` | Returns the runtime status of all RA instances | — |
+| `AddInterface` | Adds a new RA instance. Triggers config validation. | `INVALID_ARGUMENT` on validation failure |
+| `DeleteInterface` | Removes the RA instance with the given `id`. Sends a goodbye RA if `send_goodbye` is enabled. | `NOT_FOUND` if the ID does not exist |
+
+### Using grpcurl
+
+```bash
+# Get status
+$ grpcurl -plaintext localhost:50051 gora.v1.GoRAService/GetStatus
+
+# Add an interface
+$ grpcurl -plaintext -d '{
+  "interface": {
+    "id": 2,
+    "name": "eth1",
+    "ra_interval_milliseconds": 600000,
+    "preference": "medium",
+    "router_lifetime_seconds": 1800,
+    "send_goodbye": true
+  }
+}' localhost:50051 gora.v1.GoRAService/AddInterface
+
+# Delete an interface
+$ grpcurl -plaintext -d '{"id": 2}' localhost:50051 gora.v1.GoRAService/DeleteInterface
+```
+
+### Using the Go client
+
+```go
+import (
+    gorav1 "github.com/YutaroHayakawa/go-ra/api/gora/v1"
+    "google.golang.org/grpc"
+    "google.golang.org/grpc/credentials/insecure"
+)
+
+conn, _ := grpc.NewClient("localhost:50051",
+    grpc.WithTransportCredentials(insecure.NewCredentials()))
+defer conn.Close()
+
+client := gorav1.NewGoRAServiceClient(conn)
+
+resp, _ := client.GetStatus(ctx, &gorav1.GetStatusRequest{})
+for _, iface := range resp.Interfaces {
+    fmt.Printf("[%d] %s: %s\n", iface.Id, iface.Name, iface.State)
+}
 ```
 
 ## Motivation
