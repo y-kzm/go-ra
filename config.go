@@ -98,6 +98,9 @@ type InterfaceConfig struct {
 
 	// NAT64 prefix-specific configuration parameters.
 	NAT64Prefixes []*NAT64PrefixConfig `yaml:"nat64prefixes" json:"nat64prefixes" validate:"dive,required" default:"[]"`
+
+	// List of link-local IPv6 addresses to send unicast RA to.
+	Clients []string `yaml:"clients" json:"clients" validate:"dive,ipv6,link_local_ipv6" default:"[]"`
 }
 
 // PrefixConfig represents the prefix-specific configuration parameters
@@ -246,6 +249,15 @@ func (c *Config) defaultAndValidate() error {
 			96: true,
 		}
 		return validPrefixLengths[p.Bits()]
+	})
+
+	// Adhoc custom validator which validates the address is a link-local IPv6 address.
+	validate.RegisterValidation("link_local_ipv6", func(fl validator.FieldLevel) bool {
+		addr, err := netip.ParseAddr(fl.Field().String())
+		if err != nil {
+			return false
+		}
+		return addr.IsLinkLocalUnicast()
 	})
 
 	if err := validate.Struct(c); err != nil {

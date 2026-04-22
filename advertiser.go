@@ -277,6 +277,18 @@ reload:
 		// For unsolicited RA
 		ticker := time.NewTicker(time.Duration(config.RAIntervalMilliseconds) * time.Millisecond)
 
+		// Pre-parse target addresses once per config load
+		targets := make([]netip.Addr, 0, len(config.Clients))
+		if len(config.Clients) == 0 {
+			// If no clients are specified, send unsolicited RA to the all-nodes multicast address.
+			targets = append(targets, netip.IPv6LinkLocalAllNodes())
+		} else {
+			for _, client := range config.Clients {
+				addr, _ := netip.ParseAddr(client)
+				targets = append(targets, addr)
+			}
+		}
+
 		for {
 			select {
 			case rs := <-rsCh:
@@ -292,13 +304,18 @@ reload:
 				s.reportRunning()
 			case <-ticker.C:
 				// Send unsolicited RA
-				err := sock.sendRA(ctx, netip.IPv6LinkLocalAllNodes(), msg)
-				if err != nil {
-					s.reportFailing(err)
-					continue
+				failed := false
+				for _, addr := range targets {
+					if err := sock.sendRA(ctx, addr, msg); err != nil {
+						s.reportFailing(err)
+						failed = true
+						continue
+					}
+					s.incTxStat(false)
 				}
-				s.incTxStat(false)
-				s.reportRunning()
+				if !failed {
+					s.reportRunning()
+				}
 			case newConfig := <-s.reloadCh:
 				if reflect.DeepEqual(config, newConfig) {
 					s.logger.Info("No configuration change. Skip reloading.")
