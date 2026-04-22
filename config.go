@@ -21,12 +21,19 @@ type Config struct {
 	// Interface-specific configuration parameters. The Name field must be
 	// unique within the slice. The slice itself and elements must not be
 	// nil.
-	Interfaces []*InterfaceConfig `yaml:"interfaces" json:"interfaces" validate:"unique=Name,dive,required" default:"[]"`
+	Interfaces []*InterfaceConfig `yaml:"interfaces" json:"interfaces" validate:"unique=ID,dive,required" default:"[]"`
 }
 
 // InterfaceConfig represents the interface-specific configuration parameters
 type InterfaceConfig struct {
-	// Required: Network interface name. Must be unique within the configuration.
+	// Required: Unique identifier for this RA instance. Must be unique within the configuration.
+	// Multiple instances sharing the same interface name are allowed as long as IDs differ.
+	ID int `yaml:"id" json:"id"`
+
+	// Optional: Human-readable description for this RA instance.
+	Description string `yaml:"description" json:"description"`
+
+	// Required: Network interface name.
 	Name string `yaml:"name" json:"name" validate:"required"`
 
 	// Required: Interval between sending unsolicited RA. Must be >= 70 and

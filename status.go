@@ -23,6 +23,9 @@ const (
 
 // InterfaceStatus represents the interface-specific status of the Daemon
 type InterfaceStatus struct {
+	// RA instance ID
+	ID int `yaml:"id" json:"id"`
+
 	// Interface name
 	Name string `yaml:"name" json:"name"`
 

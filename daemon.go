@@ -19,7 +19,7 @@ type Daemon struct {
 	socketConstructor socketCtor
 	deviceWatcher     deviceWatcher
 
-	advertisers     map[string]*advertiser
+	advertisers     map[int]*advertiser
 	advertisersLock sync.RWMutex
 }
 
@@ -41,7 +41,7 @@ func NewDaemon(config *Config, opts ...DaemonOption) (*Daemon, error) {
 		logger:            slog.Default(),
 		socketConstructor: newSocket,
 		deviceWatcher:     newDeviceWatcher(),
-		advertisers:       map[string]*advertiser{},
+		advertisers:       map[int]*advertiser{},
 	}
 
 	for _, opt := range opts {
@@ -70,48 +70,48 @@ reload:
 		// We may modify the advertiser map from now
 		d.advertisersLock.Lock()
 
-		// Cache the interface => config mapping for later use
-		ifaceConfigs := map[string]*InterfaceConfig{}
+		// Cache the ID => config mapping for later use
+		ifaceConfigs := map[int]*InterfaceConfig{}
 
 		// Find out which advertiser to add, update and remove
 		for _, c := range config.Interfaces {
-			if advertiser, ok := d.advertisers[c.Name]; !ok {
+			if advertiser, ok := d.advertisers[c.ID]; !ok {
 				toAdd = append(toAdd, c)
 			} else {
 				toUpdate = append(toUpdate, advertiser)
 			}
-			ifaceConfigs[c.Name] = c
+			ifaceConfigs[c.ID] = c
 		}
-		for name, advertiser := range d.advertisers {
-			if _, ok := ifaceConfigs[name]; !ok {
+		for id, advertiser := range d.advertisers {
+			if _, ok := ifaceConfigs[id]; !ok {
 				toRemove = append(toRemove, advertiser)
 			}
 		}
 
 		// Add new per-interface jobs
 		for _, c := range toAdd {
-			d.logger.Info("Adding new RA sender", slog.String("interface", c.Name))
+			d.logger.Info("Adding new RA sender", slog.Int("id", c.ID), slog.String("interface", c.Name))
 			advertiser := newAdvertiser(c, d.socketConstructor, d.deviceWatcher, d.logger)
 			go advertiser.run(ctx)
-			d.advertisers[c.Name] = advertiser
+			d.advertisers[c.ID] = advertiser
 		}
 
 		// Update (reload) existing workers
 		for _, advertiser := range toUpdate {
-			iface := advertiser.initialConfig.Name
-			d.logger.Info("Updating RA sender", slog.String("interface", iface))
+			id := advertiser.initialConfig.ID
+			d.logger.Info("Updating RA sender", slog.Int("id", id), slog.String("interface", advertiser.initialConfig.Name))
 			// Set timeout to guarantee progress
 			timeout, cancelTimeout := context.WithTimeout(ctx, time.Second*3)
-			advertiser.reload(timeout, ifaceConfigs[iface])
+			advertiser.reload(timeout, ifaceConfigs[id])
 			cancelTimeout()
 		}
 
 		// Remove unnecessary workers
 		for _, advertiser := range toRemove {
-			iface := advertiser.initialConfig.Name
-			d.logger.Info("Deleting RA sender", slog.String("interface", iface))
+			id := advertiser.initialConfig.ID
+			d.logger.Info("Deleting RA sender", slog.Int("id", id), slog.String("interface", advertiser.initialConfig.Name))
 			advertiser.stop()
-			delete(d.advertisers, iface)
+			delete(d.advertisers, id)
 		}
 
 		d.advertisersLock.Unlock()
@@ -167,7 +167,7 @@ func (d *Daemon) Status() *Status {
 	d.advertisersLock.RUnlock()
 
 	sort.Slice(ifaceStatus, func(i, j int) bool {
-		return ifaceStatus[i].Name < ifaceStatus[j].Name
+		return ifaceStatus[i].ID < ifaceStatus[j].ID
 	})
 
 	return &Status{Interfaces: ifaceStatus}

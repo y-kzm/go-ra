@@ -1,5 +1,7 @@
 interfaces:
-- name: eth0
+- id: 1
+  description: "Primary RA instance on eth0"
+  name: eth0
 
   # Interval between sending unsolicited RA (ms). Range: 70-1800000. RFC4861 recommends >= 3000.
   raIntervalMilliseconds: 600000

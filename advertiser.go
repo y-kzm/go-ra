@@ -42,9 +42,9 @@ type rsMsg struct {
 
 func newAdvertiser(initialConfig *InterfaceConfig, ctor socketCtor, devWatcher deviceWatcher, logger *slog.Logger) *advertiser {
 	return &advertiser{
-		logger:        logger.With(slog.String("interface", initialConfig.Name)),
+		logger:        logger.With(slog.Int("id", initialConfig.ID), slog.String("interface", initialConfig.Name)),
 		initialConfig: initialConfig,
-		ifaceStatus:   &InterfaceStatus{Name: initialConfig.Name, State: "Unknown"},
+		ifaceStatus:   &InterfaceStatus{ID: initialConfig.ID, Name: initialConfig.Name, State: "Unknown"},
 		reloadCh:      make(chan *InterfaceConfig),
 		stopCh:        make(chan any),
 		socketCtor:    ctor,

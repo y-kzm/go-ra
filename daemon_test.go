@@ -21,6 +21,7 @@ func TestClientsUnicastRA(t *testing.T) {
 	config := &Config{
 		Interfaces: []*InterfaceConfig{
 			{
+				ID:                     1,
 				Name:                   "net0",
 				RAIntervalMilliseconds: 100,
 				RouterLifetimeSeconds:  10,
@@ -79,6 +80,7 @@ func TestSendGoodbye(t *testing.T) {
 		return &Config{
 			Interfaces: []*InterfaceConfig{
 				{
+					ID:                     1,
 					Name:                   "net0",
 					RAIntervalMilliseconds: 100,
 					RouterLifetimeSeconds:  10,
@@ -198,6 +200,7 @@ func TestDaemonHappyPath(t *testing.T) {
 	config := &Config{
 		Interfaces: []*InterfaceConfig{
 			{
+				ID:                         1,
 				Name:                       "net0",
 				RAIntervalMilliseconds:     100,
 				CurrentHopLimit:            10,
@@ -249,6 +252,7 @@ func TestDaemonHappyPath(t *testing.T) {
 				},
 			},
 			{
+				ID:                     2,
 				Name:                   "net1",
 				RAIntervalMilliseconds: 100,
 			},
