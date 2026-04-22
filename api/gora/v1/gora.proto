@@ -1,0 +1,28 @@
+// SPDX-License-Identifier: Apache-2.0
+// Copyright Authors of go-ra
+
+syntax = "proto3";
+
+package gora.v1;
+
+option go_package = "github.com/YutaroHayakawa/go-ra/api/gora/v1;gorav1";
+
+service GoRAService {
+  rpc GetStatus(GetStatusRequest) returns (GetStatusResponse);
+}
+
+message GetStatusRequest {}
+
+message GetStatusResponse {
+  repeated InterfaceStatus interfaces = 1;
+}
+
+message InterfaceStatus {
+  int32  id               = 1;
+  string name             = 2;
+  string state            = 3;
+  string message          = 4;
+  int64  last_update      = 5;
+  int32  tx_solicited_ra  = 6;
+  int32  tx_unsolicited_ra = 7;
+}
