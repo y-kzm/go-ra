@@ -289,6 +289,22 @@ reload:
 			}
 		}
 
+		// sendGoodbyeRA sends a final RA with RouterLifetime=0 and all option
+		// lifetimes zeroed to notify hosts that this router is no longer available.
+		// Uses a fresh context because the original ctx may already be cancelled at call time.
+		sendGoodbyeRA := func() {
+			goodbyeMsg := *msg
+			goodbyeMsg.RouterLifetime = 0
+			goodbyeMsg.Options = zeroOptionLifetimes(msg.Options)
+			sendCtx, cancel := context.WithTimeout(context.Background(), time.Second)
+			defer cancel()
+			for _, addr := range targets {
+				if err := sock.sendRA(sendCtx, addr, &goodbyeMsg); err != nil {
+					s.logger.Error("Failed to send goodbye RA", "error", err)
+				}
+			}
+		}
+
 		for {
 			select {
 			case rs := <-rsCh:
@@ -348,9 +364,15 @@ reload:
 					continue reload
 				}
 			case <-ctx.Done():
+				if config.SendGoodbye {
+					sendGoodbyeRA()
+				}
 				s.reportStopped(ctx.Err())
 				break reload
 			case <-s.stopCh:
+				if config.SendGoodbye {
+					sendGoodbyeRA()
+				}
 				s.reportStopped(nil)
 				break reload
 			}
@@ -378,4 +400,37 @@ func (s *advertiser) reload(ctx context.Context, newConfig *InterfaceConfig) err
 
 func (s *advertiser) stop() {
 	close(s.stopCh)
+}
+
+// zeroOptionLifetimes returns a copy of opts with all lifetime fields set to 0.
+func zeroOptionLifetimes(opts []ndp.Option) []ndp.Option {
+	result := make([]ndp.Option, len(opts))
+	for i, opt := range opts {
+		switch o := opt.(type) {
+		// case *ndp.PrefixInformation:
+		// 	p := *o
+		// 	p.ValidLifetime = 0
+		// 	p.PreferredLifetime = 0
+		// 	result[i] = &p
+		case *ndp.RouteInformation:
+			r := *o
+			r.RouteLifetime = 0
+			result[i] = &r
+		case *ndp.RecursiveDNSServer:
+			s := *o
+			s.Lifetime = 0
+			result[i] = &s
+		case *ndp.DNSSearchList:
+			d := *o
+			d.Lifetime = 0
+			result[i] = &d
+		case *ndp.PREF64:
+			p := *o
+			p.Lifetime = 0
+			result[i] = &p
+		default:
+			result[i] = opt
+		}
+	}
+	return result
 }

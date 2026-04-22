@@ -101,6 +101,10 @@ type InterfaceConfig struct {
 
 	// List of link-local IPv6 addresses to send unicast RA to.
 	Clients []string `yaml:"clients" json:"clients" validate:"dive,ipv6,link_local_ipv6" default:"[]"`
+
+	// If true, send a final RA with RouterLifetime=0 and all option lifetimes
+	// zeroed before stopping, to notify hosts that this router is no longer available.
+	SendGoodbye bool `yaml:"sendGoodbye" json:"sendGoodbye" default:"true"`
 }
 
 // PrefixConfig represents the prefix-specific configuration parameters
