@@ -1,0 +1,76 @@
+interfaces:
+- name: eth0
+
+  # Interval between sending unsolicited RA (ms). Range: 70-1800000. RFC4861 recommends >= 3000.
+  raIntervalMilliseconds: 600000
+
+  # Default value for the Hop Count field in the IP header. 0 means unspecified by this router. Range: 0-255
+  currentHopLimit: 64
+
+  # M flag: indicates that addresses are available via DHCPv6
+  managed: false
+
+  # O flag: indicates that other configuration information is available via DHCPv6
+  other: false
+
+  # Default router lifetime (seconds). 0 means not advertised as a default router. Range: 0-65535
+  routerLifetimeSeconds: 1800
+
+  # Default router preference. One of "low", "medium", or "high".
+  # NOTE: must be "medium" when routerLifetimeSeconds is 0
+  preference: medium
+
+  # Time a node assumes a neighbor is reachable (ms). 0 means unspecified by this router. Range: 0-4294967295
+  reachableTimeMilliseconds: 30000
+
+  # Time between retransmitted Neighbor Solicitation messages (ms). 0 means unspecified. Range: 0-4294967295
+  retransmitTimeMilliseconds: 1000
+
+  # MTU option (bytes). 0 or omitted means the MTU option is not advertised. Range: 0-4294967295
+  mtu: 1500
+
+  prefixes:
+  - prefix: "2001:db8::/64"
+    # L flag: indicates this prefix can be used for on-link determination
+    onLink: true
+    # A flag: indicates this prefix can be used for SLAAC
+    autonomous: true
+    # Valid lifetime (seconds). 4294967295 means infinity. Range: 0-4294967295
+    # NOTE: validLifetimeSeconds must be >= preferredLifetimeSeconds
+    validLifetimeSeconds: 2592000    # 30 days
+    preferredLifetimeSeconds: 604800 # 7 days
+  # NOTE: multiple prefixes must not overlap each other
+
+  routes:
+  - prefix: "2001:db8:1::/48"
+    # Route lifetime (seconds). Range: 0-4294967295
+    lifetimeSeconds: 3600
+    # Route preference. One of "low", "medium", or "high".
+    preference: high
+  # NOTE: multiple routes must have unique prefixes
+
+  rdnsses:
+  - lifetimeSeconds: 3600
+    # IPv6 addresses only. At least one required. Must be unique.
+    addresses:
+    - "2001:db8::53"
+
+  dnssls:
+  - lifetimeSeconds: 3600
+    # At least one required. Must be unique.
+    domainNames:
+    - "example.com"
+    - "internal.example.com"
+
+  nat64prefixes:
+  - prefix: "64:ff9b::/96"
+    # NAT64 prefix lifetime (seconds). 0 means the prefix should not be used. Range: 0-65528
+    # NOTE: prefix length must be one of /32, /40, /48, /56, /64, or /96
+    # NOTE: should not be shorter than routerLifetimeSeconds
+    lifetimeSeconds: 65528
+
+  # List of clients to send unicast RA to.
+  # NOTE: if specified, unicast RA is sent to each address instead of multicast to all-nodes
+  # NOTE: only link-local addresses (fe80::/10) are allowed
+  clients:
+  - "fe80::1"
