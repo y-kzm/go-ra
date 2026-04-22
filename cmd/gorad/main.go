@@ -10,7 +10,7 @@ import (
 	"log/slog"
 	"os/signal"
 
-	"github.com/YutaroHayakawa/go-ra"
+	ra "github.com/YutaroHayakawa/go-ra"
 	"github.com/YutaroHayakawa/go-ra/cmd/internal"
 
 	"golang.org/x/sys/unix"
@@ -24,6 +24,7 @@ var (
 
 func main() {
 	configFile := flag.String("f", "", "config file path")
+	addr := flag.String("a", "localhost:50051", "gRPC listen address")
 	v := flag.Bool("v", false, "show version information")
 
 	flag.Parse()
@@ -53,17 +54,21 @@ func main() {
 		return
 	}
 
+	srv, lis, err := internal.NewGRPCServer(*addr, daemon, slog.With("component", "grpcServer"))
+	if err != nil {
+		slog.Error("Failed to create gRPC server. Aborting.", "error", err.Error())
+		return
+	}
+
 	go func() {
-		server := internal.NewServer("localhost:8888", daemon, slog.With("component", "apiServer"))
-
-		slog.Info("Starting HTTP server")
-
-		if err := server.ListenAndServe(); err != nil {
-			slog.Error("HTTP server failed with error", "error", err.Error())
+		slog.Info("Starting gRPC server", "addr", *addr)
+		if err := srv.Serve(lis); err != nil {
+			slog.Error("gRPC server failed with error", "error", err.Error())
 		}
 	}()
 
 	ctx, cancel := signal.NotifyContext(context.Background(), unix.SIGINT, unix.SIGTERM)
 	daemon.Run(ctx)
 	cancel()
+	srv.GracefulStop()
 }

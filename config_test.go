@@ -79,11 +79,31 @@ func TestConfigValidation(t *testing.T) {
 			config: &Config{
 				Interfaces: []*InterfaceConfig{
 					{
+						ID:                     1,
 						Name:                   "net0",
 						RAIntervalMilliseconds: 1000,
 					},
 					{
+						ID:                     2,
 						Name:                   "net1",
+						RAIntervalMilliseconds: 1000,
+					},
+				},
+			},
+			expectError: false,
+		},
+		{
+			name: "Same Name with Different IDs",
+			config: &Config{
+				Interfaces: []*InterfaceConfig{
+					{
+						ID:                     1,
+						Name:                   "net0",
+						RAIntervalMilliseconds: 1000,
+					},
+					{
+						ID:                     2,
+						Name:                   "net0",
 						RAIntervalMilliseconds: 1000,
 					},
 				},
@@ -107,15 +127,17 @@ func TestConfigValidation(t *testing.T) {
 			errorTag:    "required",
 		},
 		{
-			name: "Duplicated Interface Name",
+			name: "Duplicated ID",
 			config: &Config{
 				Interfaces: []*InterfaceConfig{
 					{
+						ID:                     1,
 						Name:                   "net0",
 						RAIntervalMilliseconds: 1000,
 					},
 					{
-						Name:                   "net0",
+						ID:                     1,
+						Name:                   "net1",
 						RAIntervalMilliseconds: 1000,
 					},
 				},

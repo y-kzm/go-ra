@@ -17,6 +17,152 @@ import (
 	"k8s.io/utils/ptr"
 )
 
+func TestClientsUnicastRA(t *testing.T) {
+	config := &Config{
+		Interfaces: []*InterfaceConfig{
+			{
+				ID:                     1,
+				Name:                   "net0",
+				RAIntervalMilliseconds: 100,
+				RouterLifetimeSeconds:  10,
+				Clients:                []string{"fe80::1", "fe80::2"},
+			},
+		},
+	}
+
+	reg := newFakeSockRegistry()
+	devWatcher := newFakeDeviceWatcher("net0")
+	devWatcher.update("net0", deviceState{isUp: true, addr: net.HardwareAddr{0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77}})
+
+	d, err := NewDaemon(config, withSocketConstructor(reg.newSock), withDeviceWatcher(devWatcher))
+	require.NoError(t, err)
+
+	go d.Run(t.Context())
+
+	var sock *fakeSock
+	eventully(t, func() bool {
+		sock, err = reg.getSock("net0")
+		return err == nil
+	})
+
+	t.Run("RA is sent unicast to each client", func(t *testing.T) {
+		received := map[netip.Addr]bool{}
+		expected := map[netip.Addr]bool{
+			netip.MustParseAddr("fe80::1"): true,
+			netip.MustParseAddr("fe80::2"): true,
+		}
+
+		timeout, cancelTimeout := context.WithTimeout(context.Background(), time.Second)
+		defer cancelTimeout()
+
+		for len(received) < len(expected) {
+			select {
+			case ra := <-sock.txLLUnicastCh():
+				received[ra.to] = true
+			case <-timeout.Done():
+				t.Fatal("timeout waiting for unicast RAs")
+			}
+		}
+		require.Equal(t, expected, received)
+	})
+
+	t.Run("No multicast RA is sent", func(t *testing.T) {
+		select {
+		case <-sock.txMulticastCh():
+			t.Fatal("unexpected multicast RA")
+		default:
+		}
+	})
+}
+
+func TestSendGoodbye(t *testing.T) {
+	makeConfig := func(sendGoodbye bool) *Config {
+		return &Config{
+			Interfaces: []*InterfaceConfig{
+				{
+					ID:                     1,
+					Name:                   "net0",
+					RAIntervalMilliseconds: 100,
+					RouterLifetimeSeconds:  10,
+					SendGoodbye:            ptr.To(sendGoodbye),
+					Routes: []*RouteConfig{
+						{Prefix: "2001:db8::/64", LifetimeSeconds: 100},
+					},
+					RDNSSes: []*RDNSSConfig{
+						{LifetimeSeconds: 300, Addresses: []string{"2001:db8::1"}},
+					},
+				},
+			},
+		}
+	}
+
+	setup := func(t *testing.T, sendGoodbye bool) (sock *fakeSock, cancel context.CancelFunc) {
+		t.Helper()
+		reg := newFakeSockRegistry()
+		devWatcher := newFakeDeviceWatcher("net0")
+		devWatcher.update("net0", deviceState{isUp: true, addr: net.HardwareAddr{0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77}})
+
+		d, err := NewDaemon(makeConfig(sendGoodbye), withSocketConstructor(reg.newSock), withDeviceWatcher(devWatcher))
+		require.NoError(t, err)
+
+		ctx, cancel := context.WithCancel(context.Background())
+		go d.Run(ctx)
+
+		// Wait for socket creation and first RA
+		eventully(t, func() bool {
+			sock, err = reg.getSock("net0")
+			return err == nil
+		})
+
+		timeout, cancelTimeout := context.WithTimeout(context.Background(), time.Second)
+		defer cancelTimeout()
+		select {
+		case <-sock.txMulticastCh():
+		case <-timeout.Done():
+			t.Fatal("timeout waiting for initial RA")
+		}
+
+		return sock, cancel
+	}
+
+	t.Run("SendGoodbye true: goodbye RA with zeroed lifetimes is sent on stop", func(t *testing.T) {
+		sock, cancel := setup(t, true)
+
+		cancel()
+		eventully(t, func() bool { return sock.isClosed() })
+
+		// Drain the closed channel; the last RA should be the goodbye RA
+		var lastRA *fakeRA
+		for ra := range sock.txMulticast {
+			lastRA = &ra
+		}
+
+		require.NotNil(t, lastRA, "no goodbye RA found")
+		require.Equal(t, time.Duration(0), lastRA.msg.RouterLifetime)
+
+		for _, opt := range lastRA.msg.Options {
+			switch o := opt.(type) {
+			case *ndp.RouteInformation:
+				require.Equal(t, time.Duration(0), o.RouteLifetime)
+			case *ndp.RecursiveDNSServer:
+				require.Equal(t, time.Duration(0), o.Lifetime)
+			}
+		}
+	})
+
+	t.Run("SendGoodbye false: no goodbye RA is sent on stop", func(t *testing.T) {
+		sock, cancel := setup(t, false)
+
+		cancel()
+		eventully(t, func() bool { return sock.isClosed() })
+
+		// Drain the closed channel and verify no RA has RouterLifetime=0
+		for ra := range sock.txMulticast {
+			require.NotEqual(t, time.Duration(0), ra.msg.RouterLifetime, "unexpected goodbye RA")
+		}
+	})
+}
+
 // We use a common parameter for most of the Eventually.
 func eventully(t *testing.T, f func() bool) {
 	require.Eventually(t, f, time.Second*1, time.Millisecond*10)
@@ -54,6 +200,7 @@ func TestDaemonHappyPath(t *testing.T) {
 	config := &Config{
 		Interfaces: []*InterfaceConfig{
 			{
+				ID:                         1,
 				Name:                       "net0",
 				RAIntervalMilliseconds:     100,
 				CurrentHopLimit:            10,
@@ -105,6 +252,7 @@ func TestDaemonHappyPath(t *testing.T) {
 				},
 			},
 			{
+				ID:                     2,
 				Name:                   "net1",
 				RAIntervalMilliseconds: 100,
 			},

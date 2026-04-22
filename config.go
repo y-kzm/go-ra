@@ -21,12 +21,19 @@ type Config struct {
 	// Interface-specific configuration parameters. The Name field must be
 	// unique within the slice. The slice itself and elements must not be
 	// nil.
-	Interfaces []*InterfaceConfig `yaml:"interfaces" json:"interfaces" validate:"unique=Name,dive,required" default:"[]"`
+	Interfaces []*InterfaceConfig `yaml:"interfaces" json:"interfaces" validate:"unique=ID,dive,required" default:"[]"`
 }
 
 // InterfaceConfig represents the interface-specific configuration parameters
 type InterfaceConfig struct {
-	// Required: Network interface name. Must be unique within the configuration.
+	// Required: Unique identifier for this RA instance. Must be unique within the configuration.
+	// Multiple instances sharing the same interface name are allowed as long as IDs differ.
+	ID int `yaml:"id" json:"id"`
+
+	// Optional: Human-readable description for this RA instance.
+	Description string `yaml:"description" json:"description"`
+
+	// Required: Network interface name.
 	Name string `yaml:"name" json:"name" validate:"required"`
 
 	// Required: Interval between sending unsolicited RA. Must be >= 70 and
@@ -98,6 +105,17 @@ type InterfaceConfig struct {
 
 	// NAT64 prefix-specific configuration parameters.
 	NAT64Prefixes []*NAT64PrefixConfig `yaml:"nat64prefixes" json:"nat64prefixes" validate:"dive,required" default:"[]"`
+
+	// List of link-local IPv6 addresses to send unicast RA to.
+	Clients []string `yaml:"clients" json:"clients" validate:"dive,ipv6,link_local_ipv6" default:"[]"`
+
+	// If true, send a final RA with RouterLifetime=0 and all option lifetimes
+	// zeroed before stopping, to notify hosts that this router is no longer available.
+	SendGoodbye *bool `yaml:"sendGoodbye" json:"sendGoodbye" default:"true"`
+
+	// If true, do not send a solicited RA in response to Router Solicitations.
+	// Recommended when Clients is set, to restrict RA transmission to the specified clients only.
+	DisableRSReply bool `yaml:"disableRSReply" json:"disableRSReply"`
 }
 
 // PrefixConfig represents the prefix-specific configuration parameters
@@ -246,6 +264,15 @@ func (c *Config) defaultAndValidate() error {
 			96: true,
 		}
 		return validPrefixLengths[p.Bits()]
+	})
+
+	// Adhoc custom validator which validates the address is a link-local IPv6 address.
+	validate.RegisterValidation("link_local_ipv6", func(fl validator.FieldLevel) bool {
+		addr, err := netip.ParseAddr(fl.Field().String())
+		if err != nil {
+			return false
+		}
+		return addr.IsLinkLocalUnicast()
 	})
 
 	if err := validate.Struct(c); err != nil {

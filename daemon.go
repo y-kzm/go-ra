@@ -5,6 +5,7 @@ package ra
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"sort"
 	"sync"
@@ -19,8 +20,11 @@ type Daemon struct {
 	socketConstructor socketCtor
 	deviceWatcher     deviceWatcher
 
-	advertisers     map[string]*advertiser
+	advertisers     map[int]*advertiser
 	advertisersLock sync.RWMutex
+
+	currentConfig   *Config
+	currentConfigMu sync.RWMutex
 }
 
 // NewDaemon creates a new Daemon instance with the provided configuration and
@@ -41,7 +45,8 @@ func NewDaemon(config *Config, opts ...DaemonOption) (*Daemon, error) {
 		logger:            slog.Default(),
 		socketConstructor: newSocket,
 		deviceWatcher:     newDeviceWatcher(),
-		advertisers:       map[string]*advertiser{},
+		advertisers:       map[int]*advertiser{},
+		currentConfig:     c,
 	}
 
 	for _, opt := range opts {
@@ -70,48 +75,48 @@ reload:
 		// We may modify the advertiser map from now
 		d.advertisersLock.Lock()
 
-		// Cache the interface => config mapping for later use
-		ifaceConfigs := map[string]*InterfaceConfig{}
+		// Cache the ID => config mapping for later use
+		ifaceConfigs := map[int]*InterfaceConfig{}
 
 		// Find out which advertiser to add, update and remove
 		for _, c := range config.Interfaces {
-			if advertiser, ok := d.advertisers[c.Name]; !ok {
+			if advertiser, ok := d.advertisers[c.ID]; !ok {
 				toAdd = append(toAdd, c)
 			} else {
 				toUpdate = append(toUpdate, advertiser)
 			}
-			ifaceConfigs[c.Name] = c
+			ifaceConfigs[c.ID] = c
 		}
-		for name, advertiser := range d.advertisers {
-			if _, ok := ifaceConfigs[name]; !ok {
+		for id, advertiser := range d.advertisers {
+			if _, ok := ifaceConfigs[id]; !ok {
 				toRemove = append(toRemove, advertiser)
 			}
 		}
 
 		// Add new per-interface jobs
 		for _, c := range toAdd {
-			d.logger.Info("Adding new RA sender", slog.String("interface", c.Name))
+			d.logger.Info("Adding new RA sender", slog.Int("id", c.ID), slog.String("interface", c.Name))
 			advertiser := newAdvertiser(c, d.socketConstructor, d.deviceWatcher, d.logger)
 			go advertiser.run(ctx)
-			d.advertisers[c.Name] = advertiser
+			d.advertisers[c.ID] = advertiser
 		}
 
 		// Update (reload) existing workers
 		for _, advertiser := range toUpdate {
-			iface := advertiser.initialConfig.Name
-			d.logger.Info("Updating RA sender", slog.String("interface", iface))
+			id := advertiser.initialConfig.ID
+			d.logger.Info("Updating RA sender", slog.Int("id", id), slog.String("interface", advertiser.initialConfig.Name))
 			// Set timeout to guarantee progress
 			timeout, cancelTimeout := context.WithTimeout(ctx, time.Second*3)
-			advertiser.reload(timeout, ifaceConfigs[iface])
+			advertiser.reload(timeout, ifaceConfigs[id])
 			cancelTimeout()
 		}
 
 		// Remove unnecessary workers
 		for _, advertiser := range toRemove {
-			iface := advertiser.initialConfig.Name
-			d.logger.Info("Deleting RA sender", slog.String("interface", iface))
+			id := advertiser.initialConfig.ID
+			d.logger.Info("Deleting RA sender", slog.Int("id", id), slog.String("interface", advertiser.initialConfig.Name))
 			advertiser.stop()
-			delete(d.advertisers, iface)
+			delete(d.advertisers, id)
 		}
 
 		d.advertisersLock.Unlock()
@@ -122,6 +127,9 @@ reload:
 			case newConfig := <-d.reloadCh:
 				d.logger.Info("Reloading configuration")
 				config = newConfig
+				d.currentConfigMu.Lock()
+				d.currentConfig = newConfig
+				d.currentConfigMu.Unlock()
 				continue reload
 			case <-ctx.Done():
 				d.logger.Info("Shutting down daemon")
@@ -155,6 +163,62 @@ func (d *Daemon) Reload(ctx context.Context, newConfig *Config) error {
 	return nil
 }
 
+// AddInterface adds a new interface configuration to the daemon. It returns
+// ValidationErrors if the resulting configuration is invalid.
+func (d *Daemon) AddInterface(ctx context.Context, ifaceConfig *InterfaceConfig) error {
+	d.currentConfigMu.RLock()
+	newConfig := d.currentConfig.deepCopy()
+	d.currentConfigMu.RUnlock()
+
+	newConfig.Interfaces = append(newConfig.Interfaces, ifaceConfig)
+	return d.Reload(ctx, newConfig)
+}
+
+// UpdateInterface replaces the configuration of an existing interface. It
+// returns an error if no interface with the given ID exists, or ValidationErrors
+// if the resulting configuration is invalid.
+func (d *Daemon) UpdateInterface(ctx context.Context, ifaceConfig *InterfaceConfig) error {
+	d.currentConfigMu.RLock()
+	newConfig := d.currentConfig.deepCopy()
+	d.currentConfigMu.RUnlock()
+
+	found := false
+	for i, iface := range newConfig.Interfaces {
+		if iface.ID == ifaceConfig.ID {
+			newConfig.Interfaces[i] = ifaceConfig
+			found = true
+			break
+		}
+	}
+	if !found {
+		return fmt.Errorf("interface with id %d not found", ifaceConfig.ID)
+	}
+	return d.Reload(ctx, newConfig)
+}
+
+// DeleteInterface removes the interface configuration with the given ID from
+// the daemon. It returns an error if no interface with the given ID exists.
+func (d *Daemon) DeleteInterface(ctx context.Context, id int) error {
+	d.currentConfigMu.RLock()
+	newConfig := d.currentConfig.deepCopy()
+	d.currentConfigMu.RUnlock()
+
+	found := false
+	interfaces := make([]*InterfaceConfig, 0, len(newConfig.Interfaces))
+	for _, iface := range newConfig.Interfaces {
+		if iface.ID == id {
+			found = true
+			continue
+		}
+		interfaces = append(interfaces, iface)
+	}
+	if !found {
+		return fmt.Errorf("interface with id %d not found", id)
+	}
+	newConfig.Interfaces = interfaces
+	return d.Reload(ctx, newConfig)
+}
+
 // Status returns the current status of the daemon
 func (d *Daemon) Status() *Status {
 	d.advertisersLock.RLock()
@@ -167,7 +231,7 @@ func (d *Daemon) Status() *Status {
 	d.advertisersLock.RUnlock()
 
 	sort.Slice(ifaceStatus, func(i, j int) bool {
-		return ifaceStatus[i].Name < ifaceStatus[j].Name
+		return ifaceStatus[i].ID < ifaceStatus[j].ID
 	})
 
 	return &Status{Interfaces: ifaceStatus}

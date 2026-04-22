@@ -42,9 +42,9 @@ type rsMsg struct {
 
 func newAdvertiser(initialConfig *InterfaceConfig, ctor socketCtor, devWatcher deviceWatcher, logger *slog.Logger) *advertiser {
 	return &advertiser{
-		logger:        logger.With(slog.String("interface", initialConfig.Name)),
+		logger:        logger.With(slog.Int("id", initialConfig.ID), slog.String("interface", initialConfig.Name)),
 		initialConfig: initialConfig,
-		ifaceStatus:   &InterfaceStatus{Name: initialConfig.Name, State: "Unknown"},
+		ifaceStatus:   &InterfaceStatus{ID: initialConfig.ID, Name: initialConfig.Name, State: "Unknown"},
 		reloadCh:      make(chan *InterfaceConfig),
 		stopCh:        make(chan any),
 		socketCtor:    ctor,
@@ -277,9 +277,40 @@ reload:
 		// For unsolicited RA
 		ticker := time.NewTicker(time.Duration(config.RAIntervalMilliseconds) * time.Millisecond)
 
+		// Pre-parse target addresses once per config load
+		targets := make([]netip.Addr, 0, len(config.Clients))
+		if len(config.Clients) == 0 {
+			// If no clients are specified, send unsolicited RA to the all-nodes multicast address.
+			targets = append(targets, netip.IPv6LinkLocalAllNodes())
+		} else {
+			for _, client := range config.Clients {
+				addr, _ := netip.ParseAddr(client)
+				targets = append(targets, addr)
+			}
+		}
+
+		// sendGoodbyeRA sends a final RA with RouterLifetime=0 and all option
+		// lifetimes zeroed to notify hosts that this router is no longer available.
+		// Uses a fresh context because the original ctx may already be cancelled at call time.
+		sendGoodbyeRA := func() {
+			goodbyeMsg := *msg
+			goodbyeMsg.RouterLifetime = 0
+			goodbyeMsg.Options = zeroOptionLifetimes(msg.Options)
+			sendCtx, cancel := context.WithTimeout(context.Background(), time.Second)
+			defer cancel()
+			for _, addr := range targets {
+				if err := sock.sendRA(sendCtx, addr, &goodbyeMsg); err != nil {
+					s.logger.Error("Failed to send goodbye RA", "error", err)
+				}
+			}
+		}
+
 		for {
 			select {
 			case rs := <-rsCh:
+				if config.DisableRSReply {
+					continue
+				}
 				// Reply to RS
 				//
 				// TODO: Rate limit this to mitigate RS flooding attack
@@ -292,13 +323,18 @@ reload:
 				s.reportRunning()
 			case <-ticker.C:
 				// Send unsolicited RA
-				err := sock.sendRA(ctx, netip.IPv6LinkLocalAllNodes(), msg)
-				if err != nil {
-					s.reportFailing(err)
-					continue
+				failed := false
+				for _, addr := range targets {
+					if err := sock.sendRA(ctx, addr, msg); err != nil {
+						s.reportFailing(err)
+						failed = true
+						continue
+					}
+					s.incTxStat(false)
 				}
-				s.incTxStat(false)
-				s.reportRunning()
+				if !failed {
+					s.reportRunning()
+				}
 			case newConfig := <-s.reloadCh:
 				if reflect.DeepEqual(config, newConfig) {
 					s.logger.Info("No configuration change. Skip reloading.")
@@ -331,9 +367,15 @@ reload:
 					continue reload
 				}
 			case <-ctx.Done():
+				if *config.SendGoodbye {
+					sendGoodbyeRA()
+				}
 				s.reportStopped(ctx.Err())
 				break reload
 			case <-s.stopCh:
+				if *config.SendGoodbye {
+					sendGoodbyeRA()
+				}
 				s.reportStopped(nil)
 				break reload
 			}
@@ -361,4 +403,37 @@ func (s *advertiser) reload(ctx context.Context, newConfig *InterfaceConfig) err
 
 func (s *advertiser) stop() {
 	close(s.stopCh)
+}
+
+// zeroOptionLifetimes returns a copy of opts with all lifetime fields set to 0.
+func zeroOptionLifetimes(opts []ndp.Option) []ndp.Option {
+	result := make([]ndp.Option, len(opts))
+	for i, opt := range opts {
+		switch o := opt.(type) {
+		// case *ndp.PrefixInformation:
+		// 	p := *o
+		// 	p.ValidLifetime = 0
+		// 	p.PreferredLifetime = 0
+		// 	result[i] = &p
+		case *ndp.RouteInformation:
+			r := *o
+			r.RouteLifetime = 0
+			result[i] = &r
+		case *ndp.RecursiveDNSServer:
+			s := *o
+			s.Lifetime = 0
+			result[i] = &s
+		case *ndp.DNSSearchList:
+			d := *o
+			d.Lifetime = 0
+			result[i] = &d
+		case *ndp.PREF64:
+			p := *o
+			p.Lifetime = 0
+			result[i] = &p
+		default:
+			result[i] = opt
+		}
+	}
+	return result
 }
