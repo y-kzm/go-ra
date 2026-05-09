@@ -39,6 +39,15 @@ func NewGRPCServer(addr string, daemon *ra.Daemon, logger *slog.Logger) (*grpc.S
 	return srv, lis, nil
 }
 
+func (s *goraServer) ListInterfaces(ctx context.Context, _ *gorav1.ListInterfacesRequest) (*gorav1.ListInterfacesResponse, error) {
+	ifaces := s.daemon.Interfaces()
+	resp := &gorav1.ListInterfacesResponse{}
+	for _, iface := range ifaces {
+		resp.Interfaces = append(resp.Interfaces, InterfaceConfigToProto(iface))
+	}
+	return resp, nil
+}
+
 func (s *goraServer) AddInterface(ctx context.Context, req *gorav1.AddInterfaceRequest) (*gorav1.AddInterfaceResponse, error) {
 	ifaceConfig := InterfaceConfigFromProto(req.Interface)
 	if err := s.daemon.AddInterface(ctx, ifaceConfig); err != nil {
