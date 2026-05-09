@@ -219,6 +219,17 @@ func (d *Daemon) DeleteInterface(ctx context.Context, id int) error {
 	return d.Reload(ctx, newConfig)
 }
 
+// Interfaces returns a snapshot of the currently active interface configurations.
+func (d *Daemon) Interfaces() []*InterfaceConfig {
+	d.currentConfigMu.RLock()
+	defer d.currentConfigMu.RUnlock()
+	result := make([]*InterfaceConfig, len(d.currentConfig.Interfaces))
+	for i, iface := range d.currentConfig.Interfaces {
+		result[i] = iface.deepCopy()
+	}
+	return result
+}
+
 // Status returns the current status of the daemon
 func (d *Daemon) Status() *Status {
 	d.advertisersLock.RLock()

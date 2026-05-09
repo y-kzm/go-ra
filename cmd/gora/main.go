@@ -29,6 +29,7 @@ func usageRoot() {
 	fmt.Println()
 	fmt.Println("Subcommands:")
 	fmt.Println("  status\t\tGet the status of the service")
+	fmt.Println("  list-interfaces\tList all interface configurations")
 	fmt.Println("  add-interface\t\tAdd an interface configuration")
 	fmt.Println("  update-interface\tUpdate an existing interface configuration")
 	fmt.Println("  delete-interface\tDelete an interface configuration")
@@ -70,6 +71,27 @@ func main() {
 		defer client.Close()
 
 		status(client, output)
+		return
+	}
+
+	if os.Args[1] == "list-interfaces" {
+		var (
+			serverAddr string
+			output     string
+		)
+		command := flag.NewFlagSet("list-interfaces", flag.ExitOnError)
+		command.StringVar(&serverAddr, "s", "localhost:50051", "gRPC server address")
+		command.StringVar(&output, "o", "yaml", "Output format (json or yaml)")
+		command.Parse(os.Args[2:])
+
+		client, err := internal.NewClient(serverAddr)
+		if err != nil {
+			fmt.Printf("Failed to connect to server: %s\n", err.Error())
+			os.Exit(1)
+		}
+		defer client.Close()
+
+		listInterfaces(client, output)
 		return
 	}
 
@@ -153,6 +175,34 @@ func main() {
 
 	usageRoot()
 	os.Exit(1)
+}
+
+func listInterfaces(client *internal.Client, output string) {
+	resp, err := client.ListInterfaces(context.Background(), &gorav1.ListInterfacesRequest{})
+	if err != nil {
+		fmt.Printf("Failed to list interfaces: %s\n", err.Error())
+		os.Exit(1)
+	}
+
+	switch output {
+	case "json":
+		j, err := json.MarshalIndent(resp, "", "  ")
+		if err != nil {
+			fmt.Printf("Failed to marshal JSON: %s\n", err.Error())
+			os.Exit(1)
+		}
+		fmt.Print(string(j))
+	case "yaml":
+		out, err := yaml.Marshal(resp)
+		if err != nil {
+			fmt.Printf("Failed to marshal YAML: %s\n", err.Error())
+			os.Exit(1)
+		}
+		fmt.Print(string(out))
+	default:
+		fmt.Printf("Invalid output format: %s\n", output)
+		os.Exit(1)
+	}
 }
 
 func addInterface(client *internal.Client, configFile string) {

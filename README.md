@@ -118,6 +118,12 @@ ID    Name    Age    TxUnsolicited    TxSolicited    State      Message
 1     eth0    22s    21               1              Running
 ```
 
+List all interface configurations at runtime.
+
+```bash
+$ gora list-interfaces
+```
+
 Add an interface at runtime. The file should contain a single interface config
 (without the `interfaces:` wrapper).
 
@@ -151,7 +157,9 @@ available at `github.com/YutaroHayakawa/go-ra/api/gora/v1`.
 ```protobuf
 service GoRAService {
   rpc GetStatus(GetStatusRequest) returns (GetStatusResponse);
+  rpc ListInterfaces(ListInterfacesRequest) returns (ListInterfacesResponse);
   rpc AddInterface(AddInterfaceRequest) returns (AddInterfaceResponse);
+  rpc UpdateInterface(UpdateInterfaceRequest) returns (UpdateInterfaceResponse);
   rpc DeleteInterface(DeleteInterfaceRequest) returns (DeleteInterfaceResponse);
 }
 ```
@@ -161,7 +169,9 @@ service GoRAService {
 | RPC | Description | Error codes |
 |-----|-------------|-------------|
 | `GetStatus` | Returns the runtime status of all RA instances | — |
+| `ListInterfaces` | Returns the current configuration of all RA instances | — |
 | `AddInterface` | Adds a new RA instance. Triggers config validation. | `INVALID_ARGUMENT` on validation failure |
+| `UpdateInterface` | Replaces the configuration of an existing RA instance. | `INVALID_ARGUMENT` on validation failure, `NOT_FOUND` if the ID does not exist |
 | `DeleteInterface` | Removes the RA instance with the given `id`. Sends a goodbye RA if `send_goodbye` is enabled. | `NOT_FOUND` if the ID does not exist |
 
 ### Using grpcurl
@@ -169,6 +179,9 @@ service GoRAService {
 ```bash
 # Get status
 $ grpcurl -plaintext localhost:50051 gora.v1.GoRAService/GetStatus
+
+# List interface configurations
+$ grpcurl -plaintext localhost:50051 gora.v1.GoRAService/ListInterfaces
 
 # Add an interface
 $ grpcurl -plaintext -d '{
