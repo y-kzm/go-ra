@@ -69,10 +69,30 @@ func (s *goraServer) UpdateInterface(ctx context.Context, req *gorav1.UpdateInte
 }
 
 func (s *goraServer) DeleteInterface(ctx context.Context, req *gorav1.DeleteInterfaceRequest) (*gorav1.DeleteInterfaceResponse, error) {
-	if err := s.daemon.DeleteInterface(ctx, int(req.Id)); err != nil {
+	opts := ra.DeleteOptions{SkipGoodbye: req.SkipGoodbye}
+	if err := s.daemon.DeleteInterfaceWithOptions(ctx, int(req.Id), opts); err != nil {
 		return nil, status.Errorf(codes.NotFound, "%v", err)
 	}
 	return &gorav1.DeleteInterfaceResponse{}, nil
+}
+
+func (s *goraServer) SendRA(ctx context.Context, req *gorav1.SendRARequest) (*gorav1.SendRAResponse, error) {
+	if req.Interface == nil {
+		return nil, status.Error(codes.InvalidArgument, "interface is required")
+	}
+	ifaceConfig := InterfaceConfigFromProto(req.Interface)
+	if ifaceConfig.RAIntervalMilliseconds == 0 {
+		// Unused for a one-shot RA, but required by the validation.
+		ifaceConfig.RAIntervalMilliseconds = 600000
+	}
+	if err := s.daemon.SendRA(ctx, ifaceConfig, req.WithdrawnRoutes); err != nil {
+		var verrs ra.ValidationErrors
+		if errors.As(err, &verrs) {
+			return nil, status.Errorf(codes.InvalidArgument, "%v", err)
+		}
+		return nil, status.Errorf(codes.Internal, "%v", err)
+	}
+	return &gorav1.SendRAResponse{}, nil
 }
 
 func (s *goraServer) GetStatus(ctx context.Context, _ *gorav1.GetStatusRequest) (*gorav1.GetStatusResponse, error) {

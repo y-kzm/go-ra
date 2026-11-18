@@ -78,6 +78,14 @@ interfaces:
   clients:
   - "fe80::1"
 
+  # Link-local source address of the RAs of this instance. It must be assigned
+  # to the interface. If omitted, the first link-local address the kernel
+  # lists for the interface is used.
+  # NOTE: hosts key their default router list by the RA source address.
+  # Instances that advertise different routerLifetimeSeconds or preference to
+  # the same host must use different source addresses.
+  # sourceAddress: "fe80::face:1"
+
   # If true, do not reply to Router Solicitations.
   # RECOMMENDED: enable this when clients is set
   disableRSReply: false

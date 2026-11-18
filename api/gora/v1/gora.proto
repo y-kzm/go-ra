@@ -15,6 +15,9 @@ service GoRAService {
   rpc AddInterface(AddInterfaceRequest) returns (AddInterfaceResponse);
   rpc UpdateInterface(UpdateInterfaceRequest) returns (UpdateInterfaceResponse);
   rpc DeleteInterface(DeleteInterfaceRequest) returns (DeleteInterfaceResponse);
+  // SendRA sends a single RA without installing a configuration. It is used
+  // to withdraw routes or a default router from specific hosts.
+  rpc SendRA(SendRARequest) returns (SendRAResponse);
 }
 
 // GetStatus
@@ -63,9 +66,26 @@ message UpdateInterfaceResponse {}
 
 message DeleteInterfaceRequest {
   int32 id = 1;
+  // Remove the instance without sending a goodbye RA, even if its
+  // send_goodbye is true.
+  bool skip_goodbye = 2;
 }
 
 message DeleteInterfaceResponse {}
+
+// SendRA
+
+message SendRARequest {
+  // The RA to send: built from this configuration and sent once to its
+  // clients (or to the all-nodes multicast address if it has none). The id
+  // and ra_interval_milliseconds fields are ignored.
+  InterfaceConfig interface = 1;
+  // Prefixes advertised with a zero route lifetime in addition to the routes
+  // of the configuration, so that the receivers remove them.
+  repeated string withdrawn_routes = 2;
+}
+
+message SendRAResponse {}
 
 // Config messages
 
@@ -93,6 +113,9 @@ message InterfaceConfig {
   repeated string            clients         = 18;
   google.protobuf.BoolValue  send_goodbye    = 19;
   bool                       disable_rs_reply = 20;
+  // Link-local source address of the RAs. Empty means the interface's
+  // primary link-local address.
+  string                     source_address  = 21;
 }
 
 message PrefixConfig {

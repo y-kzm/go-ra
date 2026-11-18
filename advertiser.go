@@ -8,10 +8,12 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"net"
 	"net/netip"
 	"reflect"
 	"slices"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/mdlayher/ndp"
@@ -28,8 +30,14 @@ type advertiser struct {
 	ifaceStatus     *InterfaceStatus
 	ifaceStatusLock sync.RWMutex
 
-	reloadCh      chan *InterfaceConfig
-	stopCh        chan any
+	reloadCh chan *InterfaceConfig
+	stopCh   chan any
+	// skipGoodbye suppresses the goodbye RA when the instance is stopped
+	// by stop(). It doesn't affect the daemon shutdown.
+	skipGoodbye atomic.Bool
+	// stopped is closed when run returns. After that the instance sends
+	// no more RAs.
+	stopped       chan struct{}
 	socketCtor    socketCtor
 	deviceWatcher deviceWatcher
 }
@@ -47,29 +55,61 @@ func newAdvertiser(initialConfig *InterfaceConfig, ctor socketCtor, devWatcher d
 		ifaceStatus:   &InterfaceStatus{ID: initialConfig.ID, Name: initialConfig.Name, State: "Unknown"},
 		reloadCh:      make(chan *InterfaceConfig),
 		stopCh:        make(chan any),
+		stopped:       make(chan struct{}),
 		socketCtor:    ctor,
 		deviceWatcher: devWatcher,
 	}
 }
 
 func (s *advertiser) createRAMsg(config *InterfaceConfig, deviceState *deviceState) *ndp.RouterAdvertisement {
+	return buildRAMsg(config, deviceState.addr)
+}
+
+// buildRAMsg builds the RA message advertised for config. hwAddr is put in
+// the Source Link-Layer Address option. The configuration must have been
+// validated.
+func buildRAMsg(config *InterfaceConfig, hwAddr net.HardwareAddr) *ndp.RouterAdvertisement {
 	return &ndp.RouterAdvertisement{
 		CurrentHopLimit:           uint8(config.CurrentHopLimit),
 		ManagedConfiguration:      config.Managed,
 		OtherConfiguration:        config.Other,
-		RouterSelectionPreference: s.toNDPPreference(config.Preference),
+		RouterSelectionPreference: toNDPPreference(config.Preference),
 		RouterLifetime:            time.Duration(config.RouterLifetimeSeconds) * time.Second,
 		ReachableTime:             time.Duration(config.ReachableTimeMilliseconds) * time.Millisecond,
 		RetransmitTimer:           time.Duration(config.RetransmitTimeMilliseconds) * time.Millisecond,
-		Options:                   s.createOptions(config, deviceState),
+		Options:                   buildOptions(config, hwAddr),
 	}
 }
 
-func (s *advertiser) createOptions(config *InterfaceConfig, deviceState *deviceState) []ndp.Option {
+// raTargets returns the destinations of the unsolicited RAs of config: its
+// clients, or the all-nodes multicast address if it has none.
+func raTargets(config *InterfaceConfig) []netip.Addr {
+	if len(config.Clients) == 0 {
+		return []netip.Addr{netip.IPv6LinkLocalAllNodes()}
+	}
+	targets := make([]netip.Addr, 0, len(config.Clients))
+	for _, client := range config.Clients {
+		// Validated already. An invalid address here is a bug.
+		targets = append(targets, netip.MustParseAddr(client))
+	}
+	return targets
+}
+
+// raSource returns the configured source address of config, or the zero
+// Addr if the interface's primary link-local address should be used.
+func raSource(config *InterfaceConfig) netip.Addr {
+	if config.SourceAddress == "" {
+		return netip.Addr{}
+	}
+	// Validated already. An invalid address here is a bug.
+	return netip.MustParseAddr(config.SourceAddress)
+}
+
+func buildOptions(config *InterfaceConfig, hwAddr net.HardwareAddr) []ndp.Option {
 	options := []ndp.Option{
 		&ndp.LinkLayerAddress{
 			Direction: ndp.Source,
-			Addr:      deviceState.addr,
+			Addr:      hwAddr,
 		},
 	}
 
@@ -99,7 +139,7 @@ func (s *advertiser) createOptions(config *InterfaceConfig, deviceState *deviceS
 		p := netip.MustParsePrefix(route.Prefix)
 		options = append(options, &ndp.RouteInformation{
 			PrefixLength:  uint8(p.Bits()),
-			Preference:    s.toNDPPreference(route.Preference),
+			Preference:    toNDPPreference(route.Preference),
 			RouteLifetime: time.Second * time.Duration(route.LifetimeSeconds),
 			Prefix:        p.Addr(),
 		})
@@ -135,16 +175,15 @@ func (s *advertiser) createOptions(config *InterfaceConfig, deviceState *deviceS
 	return options
 }
 
-func (s *advertiser) toNDPPreference(preference string) ndp.Preference {
+// toNDPPreference converts a validated preference string. Unknown values
+// map to medium.
+func toNDPPreference(preference string) ndp.Preference {
 	switch preference {
 	case "low":
 		return ndp.Low
-	case "medium":
-		return ndp.Medium
 	case "high":
 		return ndp.High
 	default:
-		s.logger.Warn("Unknown router preference. Using medium.", "preference", preference)
 		return ndp.Medium
 	}
 }
@@ -202,6 +241,8 @@ func (s *advertiser) setLastUpdate() {
 }
 
 func (s *advertiser) run(ctx context.Context) {
+	defer close(s.stopped)
+
 	// The current desired configuration
 	config := s.initialConfig
 
@@ -277,16 +318,31 @@ reload:
 		// For unsolicited RA
 		ticker := time.NewTicker(time.Duration(config.RAIntervalMilliseconds) * time.Millisecond)
 
-		// Pre-parse target addresses once per config load
-		targets := make([]netip.Addr, 0, len(config.Clients))
-		if len(config.Clients) == 0 {
-			// If no clients are specified, send unsolicited RA to the all-nodes multicast address.
-			targets = append(targets, netip.IPv6LinkLocalAllNodes())
-		} else {
-			for _, client := range config.Clients {
-				addr, _ := netip.ParseAddr(client)
-				targets = append(targets, addr)
+		// Pre-parse the source and target addresses once per config load
+		src := raSource(config)
+		targets := raTargets(config)
+
+		// sendUnsolicitedRA sends the current RA to every target.
+		sendUnsolicitedRA := func() {
+			failed := false
+			for _, addr := range targets {
+				if err := sock.sendRA(ctx, src, addr, msg); err != nil {
+					s.reportFailing(err)
+					failed = true
+					continue
+				}
+				s.incTxStat(false)
 			}
+			if !failed {
+				s.reportRunning()
+			}
+		}
+
+		// A unicast instance does not rely on RS to deliver its content
+		// quickly, so advertise right after every (re)load instead of
+		// waiting for the first interval to elapse.
+		if len(config.Clients) > 0 {
+			sendUnsolicitedRA()
 		}
 
 		// sendGoodbyeRA sends a final RA with RouterLifetime=0 and all option
@@ -295,11 +351,14 @@ reload:
 		sendGoodbyeRA := func() {
 			goodbyeMsg := *msg
 			goodbyeMsg.RouterLifetime = 0
+			// RFC 4191 Section 2.2: the preference must be medium when the
+			// Router Lifetime is zero.
+			goodbyeMsg.RouterSelectionPreference = ndp.Medium
 			goodbyeMsg.Options = zeroOptionLifetimes(msg.Options)
 			sendCtx, cancel := context.WithTimeout(context.Background(), time.Second)
 			defer cancel()
 			for _, addr := range targets {
-				if err := sock.sendRA(sendCtx, addr, &goodbyeMsg); err != nil {
+				if err := sock.sendRA(sendCtx, src, addr, &goodbyeMsg); err != nil {
 					s.logger.Error("Failed to send goodbye RA", "error", err)
 				}
 			}
@@ -314,7 +373,7 @@ reload:
 				// Reply to RS
 				//
 				// TODO: Rate limit this to mitigate RS flooding attack
-				err := sock.sendRA(ctx, rs.from, msg)
+				err := sock.sendRA(ctx, src, rs.from, msg)
 				if err != nil {
 					s.reportFailing(err)
 					continue
@@ -322,19 +381,7 @@ reload:
 				s.incTxStat(true)
 				s.reportRunning()
 			case <-ticker.C:
-				// Send unsolicited RA
-				failed := false
-				for _, addr := range targets {
-					if err := sock.sendRA(ctx, addr, msg); err != nil {
-						s.reportFailing(err)
-						failed = true
-						continue
-					}
-					s.incTxStat(false)
-				}
-				if !failed {
-					s.reportRunning()
-				}
+				sendUnsolicitedRA()
 			case newConfig := <-s.reloadCh:
 				if reflect.DeepEqual(config, newConfig) {
 					s.logger.Info("No configuration change. Skip reloading.")
@@ -373,7 +420,7 @@ reload:
 				s.reportStopped(ctx.Err())
 				break reload
 			case <-s.stopCh:
-				if *config.SendGoodbye {
+				if *config.SendGoodbye && !s.skipGoodbye.Load() {
 					sendGoodbyeRA()
 				}
 				s.reportStopped(nil)
@@ -401,7 +448,10 @@ func (s *advertiser) reload(ctx context.Context, newConfig *InterfaceConfig) err
 	return nil
 }
 
-func (s *advertiser) stop() {
+// stop stops the advertiser. If skipGoodbye is true, no goodbye RA is sent
+// regardless of the SendGoodbye configuration.
+func (s *advertiser) stop(skipGoodbye bool) {
+	s.skipGoodbye.Store(skipGoodbye)
 	close(s.stopCh)
 }
 

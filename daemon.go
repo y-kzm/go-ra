@@ -5,11 +5,15 @@ package ra
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
+	"net/netip"
 	"sort"
 	"sync"
 	"time"
+
+	"github.com/mdlayher/ndp"
 )
 
 // Daemon is the main struct for the ra daemon
@@ -25,6 +29,10 @@ type Daemon struct {
 
 	currentConfig   *Config
 	currentConfigMu sync.RWMutex
+
+	// IDs of the instances to be removed without a goodbye RA on the next
+	// reload. Protected by advertisersLock.
+	silentDeletes map[int]struct{}
 }
 
 // NewDaemon creates a new Daemon instance with the provided configuration and
@@ -46,6 +54,7 @@ func NewDaemon(config *Config, opts ...DaemonOption) (*Daemon, error) {
 		socketConstructor: newSocket,
 		deviceWatcher:     newDeviceWatcher(),
 		advertisers:       map[int]*advertiser{},
+		silentDeletes:     map[int]struct{}{},
 		currentConfig:     c,
 	}
 
@@ -115,8 +124,10 @@ reload:
 		for _, advertiser := range toRemove {
 			id := advertiser.initialConfig.ID
 			d.logger.Info("Deleting RA sender", slog.Int("id", id), slog.String("interface", advertiser.initialConfig.Name))
-			advertiser.stop()
+			_, silent := d.silentDeletes[id]
+			advertiser.stop(silent)
 			delete(d.advertisers, id)
+			delete(d.silentDeletes, id)
 		}
 
 		d.advertisersLock.Unlock()
@@ -196,9 +207,23 @@ func (d *Daemon) UpdateInterface(ctx context.Context, ifaceConfig *InterfaceConf
 	return d.Reload(ctx, newConfig)
 }
 
+// DeleteOptions are the options of DeleteInterfaceWithOptions.
+type DeleteOptions struct {
+	// SkipGoodbye removes the instance without sending a goodbye RA, even
+	// if its SendGoodbye is true. Use it when the caller withdraws the
+	// advertised state itself (see SendRA), for example because some of the
+	// clients are now served by another instance.
+	SkipGoodbye bool
+}
+
 // DeleteInterface removes the interface configuration with the given ID from
 // the daemon. It returns an error if no interface with the given ID exists.
 func (d *Daemon) DeleteInterface(ctx context.Context, id int) error {
+	return d.DeleteInterfaceWithOptions(ctx, id, DeleteOptions{})
+}
+
+// DeleteInterfaceWithOptions is DeleteInterface with options.
+func (d *Daemon) DeleteInterfaceWithOptions(ctx context.Context, id int, opts DeleteOptions) error {
 	d.currentConfigMu.RLock()
 	newConfig := d.currentConfig.deepCopy()
 	d.currentConfigMu.RUnlock()
@@ -216,7 +241,93 @@ func (d *Daemon) DeleteInterface(ctx context.Context, id int) error {
 		return fmt.Errorf("interface with id %d not found", id)
 	}
 	newConfig.Interfaces = interfaces
-	return d.Reload(ctx, newConfig)
+
+	d.advertisersLock.Lock()
+	adv := d.advertisers[id]
+	if opts.SkipGoodbye {
+		d.silentDeletes[id] = struct{}{}
+	}
+	d.advertisersLock.Unlock()
+
+	if err := d.Reload(ctx, newConfig); err != nil {
+		d.advertisersLock.Lock()
+		delete(d.silentDeletes, id)
+		d.advertisersLock.Unlock()
+		return err
+	}
+
+	// The reload is applied asynchronously. Wait until the instance has
+	// really stopped, so that a caller that withdraws its state right after
+	// this call cannot be overtaken by one more periodic RA.
+	if adv != nil {
+		select {
+		case <-adv.stopped:
+		case <-ctx.Done():
+			return ctx.Err()
+		}
+	}
+	return nil
+}
+
+// SendRA sends a single RA built from ifaceConfig to its clients (or to the
+// all-nodes multicast address if it has none) without installing the
+// configuration. For every prefix in withdrawnRoutes that is not among the
+// routes of ifaceConfig, a Route Information Option with a zero lifetime is
+// appended, which makes the receivers remove that route.
+//
+// It is meant for withdrawing state that a previous configuration installed
+// on specific hosts: RAs are soft state, so without an explicit withdrawal a
+// host keeps a route or a default router until its lifetime expires. It
+// returns ValidationErrors if the configuration is invalid.
+func (d *Daemon) SendRA(ctx context.Context, ifaceConfig *InterfaceConfig, withdrawnRoutes []string) error {
+	c := &Config{Interfaces: []*InterfaceConfig{ifaceConfig.deepCopy()}}
+	if err := c.defaultAndValidate(); err != nil {
+		return err
+	}
+	config := c.Interfaces[0]
+
+	advertised := map[netip.Prefix]struct{}{}
+	for _, route := range config.Routes {
+		advertised[netip.MustParsePrefix(route.Prefix).Masked()] = struct{}{}
+	}
+	withdrawn := []netip.Prefix{}
+	for _, r := range withdrawnRoutes {
+		p, err := netip.ParsePrefix(r)
+		if err != nil || !p.Addr().Is6() || p.Addr().Is4In6() {
+			return fmt.Errorf("invalid withdrawn route %q: must be an IPv6 prefix", r)
+		}
+		p = p.Masked()
+		if _, ok := advertised[p]; ok {
+			continue
+		}
+		advertised[p] = struct{}{}
+		withdrawn = append(withdrawn, p)
+	}
+
+	sock, err := d.socketConstructor(config.Name)
+	if err != nil {
+		return fmt.Errorf("cannot create socket on %s: %w", config.Name, err)
+	}
+	defer sock.close()
+
+	msg := buildRAMsg(config, sock.hardwareAddr())
+	for _, p := range withdrawn {
+		msg.Options = append(msg.Options, &ndp.RouteInformation{
+			PrefixLength:  uint8(p.Bits()),
+			Preference:    ndp.Medium,
+			RouteLifetime: 0,
+			Prefix:        p.Addr(),
+		})
+	}
+
+	src := raSource(config)
+	var errs []error
+	for _, dst := range raTargets(config) {
+		if err := sock.sendRA(ctx, src, dst, msg); err != nil {
+			errs = append(errs, fmt.Errorf("send RA to %s: %w", dst, err))
+		}
+	}
+	return errors.Join(errs...)
 }
 
 // Interfaces returns a snapshot of the currently active interface configurations.

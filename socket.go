@@ -17,7 +17,10 @@ import (
 // socket is a raw socket for sending RA and receiving RS
 type socket interface {
 	hardwareAddr() net.HardwareAddr
-	sendRA(ctx context.Context, dst netip.Addr, msg *ndp.RouterAdvertisement) error
+	// sendRA sends the RA to dst. If src is a valid address, it is used as
+	// the source address of the packet instead of the interface's primary
+	// link-local address. src must be assigned to the interface.
+	sendRA(ctx context.Context, src, dst netip.Addr, msg *ndp.RouterAdvertisement) error
 	recvRS(ctx context.Context) (*ndp.RouterSolicitation, netip.Addr, error)
 	close()
 }
@@ -48,8 +51,19 @@ func (s *sock) hardwareAddr() net.HardwareAddr {
 	return s.iface.HardwareAddr
 }
 
-func (s *sock) sendRA(ctx context.Context, addr netip.Addr, msg *ndp.RouterAdvertisement) error {
+func (s *sock) sendRA(ctx context.Context, src, addr netip.Addr, msg *ndp.RouterAdvertisement) error {
 	var err error
+
+	// Select the source address per packet with IPV6_PKTINFO. A nil control
+	// message lets the kernel use the address the socket is bound to.
+	var cm *ipv6.ControlMessage
+	if src.IsValid() {
+		cm = &ipv6.ControlMessage{
+			Src:      net.IP(src.AsSlice()),
+			IfIndex:  s.iface.Index,
+			HopLimit: ndp.HopLimit,
+		}
+	}
 
 	ch := make(chan any)
 
@@ -58,7 +72,7 @@ func (s *sock) sendRA(ctx context.Context, addr netip.Addr, msg *ndp.RouterAdver
 		// Write to the raw socket shouldn't take long. 2 seconds is long
 		// enough time that indicates something wrong happening.
 		s.conn.SetWriteDeadline(time.Now().Add(time.Second * 2))
-		err = s.conn.WriteTo(msg, nil, addr)
+		err = s.conn.WriteTo(msg, cm, addr)
 	}()
 
 	select {

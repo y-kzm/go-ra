@@ -109,6 +109,17 @@ type InterfaceConfig struct {
 	// List of link-local IPv6 addresses to send unicast RA to.
 	Clients []string `yaml:"clients" json:"clients" validate:"dive,ipv6,link_local_ipv6" default:"[]"`
 
+	// Optional: Link-local IPv6 address used as the source address of the
+	// RAs of this instance. It must be assigned to the interface. If empty,
+	// the first link-local address the kernel lists for the interface is
+	// used; with more than one link-local address that is not necessarily
+	// the original one, so set this field on every instance. Hosts key their
+	// default router list by the RA source address, so instances that
+	// advertise different Router Lifetime or Preference values to the same
+	// host must use different source addresses; otherwise each RA overwrites
+	// the state installed by the other.
+	SourceAddress string `yaml:"sourceAddress" json:"sourceAddress" validate:"omitempty,ipv6,link_local_ipv6"`
+
 	// If true, send a final RA with RouterLifetime=0 and all option lifetimes
 	// zeroed before stopping, to notify hosts that this router is no longer available.
 	SendGoodbye *bool `yaml:"sendGoodbye" json:"sendGoodbye" default:"true"`

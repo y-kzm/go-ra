@@ -27,6 +27,7 @@ const (
 	GoRAService_AddInterface_FullMethodName    = "/gora.v1.GoRAService/AddInterface"
 	GoRAService_UpdateInterface_FullMethodName = "/gora.v1.GoRAService/UpdateInterface"
 	GoRAService_DeleteInterface_FullMethodName = "/gora.v1.GoRAService/DeleteInterface"
+	GoRAService_SendRA_FullMethodName          = "/gora.v1.GoRAService/SendRA"
 )
 
 // GoRAServiceClient is the client API for GoRAService service.
@@ -38,6 +39,9 @@ type GoRAServiceClient interface {
 	AddInterface(ctx context.Context, in *AddInterfaceRequest, opts ...grpc.CallOption) (*AddInterfaceResponse, error)
 	UpdateInterface(ctx context.Context, in *UpdateInterfaceRequest, opts ...grpc.CallOption) (*UpdateInterfaceResponse, error)
 	DeleteInterface(ctx context.Context, in *DeleteInterfaceRequest, opts ...grpc.CallOption) (*DeleteInterfaceResponse, error)
+	// SendRA sends a single RA without installing a configuration. It is used
+	// to withdraw routes or a default router from specific hosts.
+	SendRA(ctx context.Context, in *SendRARequest, opts ...grpc.CallOption) (*SendRAResponse, error)
 }
 
 type goRAServiceClient struct {
@@ -98,6 +102,16 @@ func (c *goRAServiceClient) DeleteInterface(ctx context.Context, in *DeleteInter
 	return out, nil
 }
 
+func (c *goRAServiceClient) SendRA(ctx context.Context, in *SendRARequest, opts ...grpc.CallOption) (*SendRAResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SendRAResponse)
+	err := c.cc.Invoke(ctx, GoRAService_SendRA_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // GoRAServiceServer is the server API for GoRAService service.
 // All implementations must embed UnimplementedGoRAServiceServer
 // for forward compatibility.
@@ -107,6 +121,9 @@ type GoRAServiceServer interface {
 	AddInterface(context.Context, *AddInterfaceRequest) (*AddInterfaceResponse, error)
 	UpdateInterface(context.Context, *UpdateInterfaceRequest) (*UpdateInterfaceResponse, error)
 	DeleteInterface(context.Context, *DeleteInterfaceRequest) (*DeleteInterfaceResponse, error)
+	// SendRA sends a single RA without installing a configuration. It is used
+	// to withdraw routes or a default router from specific hosts.
+	SendRA(context.Context, *SendRARequest) (*SendRAResponse, error)
 	mustEmbedUnimplementedGoRAServiceServer()
 }
 
@@ -131,6 +148,9 @@ func (UnimplementedGoRAServiceServer) UpdateInterface(context.Context, *UpdateIn
 }
 func (UnimplementedGoRAServiceServer) DeleteInterface(context.Context, *DeleteInterfaceRequest) (*DeleteInterfaceResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method DeleteInterface not implemented")
+}
+func (UnimplementedGoRAServiceServer) SendRA(context.Context, *SendRARequest) (*SendRAResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method SendRA not implemented")
 }
 func (UnimplementedGoRAServiceServer) mustEmbedUnimplementedGoRAServiceServer() {}
 func (UnimplementedGoRAServiceServer) testEmbeddedByValue()                     {}
@@ -243,6 +263,24 @@ func _GoRAService_DeleteInterface_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _GoRAService_SendRA_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SendRARequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GoRAServiceServer).SendRA(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: GoRAService_SendRA_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GoRAServiceServer).SendRA(ctx, req.(*SendRARequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // GoRAService_ServiceDesc is the grpc.ServiceDesc for GoRAService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -269,6 +307,10 @@ var GoRAService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DeleteInterface",
 			Handler:    _GoRAService_DeleteInterface_Handler,
+		},
+		{
+			MethodName: "SendRA",
+			Handler:    _GoRAService_SendRA_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

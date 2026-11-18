@@ -30,8 +30,13 @@ func (r *fakeSockRegistry) newSock(iface string) (socket, error) {
 	r.regLock.Lock()
 	defer r.regLock.Unlock()
 
-	if _, ok := r.reg[iface]; ok {
-		return nil, fmt.Errorf("duplicate interface name")
+	if fs, ok := r.reg[iface]; ok {
+		if fs.isClosed() {
+			return nil, fmt.Errorf("duplicate interface name")
+		}
+		// A second socket on the same interface (e.g. a one-shot RA)
+		// shares the channels of the first one, but must not close them.
+		return &sharedFakeSock{fakeSock: fs}, nil
 	}
 
 	fs := &fakeSock{
@@ -67,8 +72,16 @@ type fakeSock struct {
 type fakeRA struct {
 	tstamp time.Time
 	msg    *ndp.RouterAdvertisement
+	from   netip.Addr
 	to     netip.Addr
 }
+
+// sharedFakeSock is a view of an existing fakeSock whose close is a no-op.
+type sharedFakeSock struct {
+	*fakeSock
+}
+
+func (s *sharedFakeSock) close() {}
 
 type fakeRS struct {
 	msg  *ndp.RouterSolicitation
@@ -93,8 +106,8 @@ func (s *fakeSock) hardwareAddr() net.HardwareAddr {
 	return net.HardwareAddr{0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff}
 }
 
-func (s *fakeSock) sendRA(_ context.Context, addr netip.Addr, msg *ndp.RouterAdvertisement) error {
-	ra := fakeRA{tstamp: time.Now(), msg: msg, to: addr}
+func (s *fakeSock) sendRA(_ context.Context, src, addr netip.Addr, msg *ndp.RouterAdvertisement) error {
+	ra := fakeRA{tstamp: time.Now(), msg: msg, from: src, to: addr}
 	if addr.IsMulticast() {
 		select {
 		case s.txMulticast <- ra:
