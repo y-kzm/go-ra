@@ -144,8 +144,36 @@ reload:
 				continue reload
 			case <-ctx.Done():
 				d.logger.Info("Shutting down daemon")
+				d.waitAdvertisers(shutdownTimeout)
 				return
 			}
+		}
+	}
+}
+
+// shutdownTimeout bounds how long Run waits for the final RAs on shutdown.
+const shutdownTimeout = 3 * time.Second
+
+// waitAdvertisers waits until every advertiser has stopped. On shutdown each
+// advertiser sends its final RAs (Router Lifetime 0), one per client for a
+// unicast instance. Returning earlier would let the process exit while they
+// are still being sent, and the remaining hosts would keep the router until
+// its lifetime expires.
+func (d *Daemon) waitAdvertisers(timeout time.Duration) {
+	d.advertisersLock.Lock()
+	stopped := make([]<-chan struct{}, 0, len(d.advertisers))
+	for _, adv := range d.advertisers {
+		stopped = append(stopped, adv.stopped)
+	}
+	d.advertisersLock.Unlock()
+
+	deadline := time.After(timeout)
+	for _, ch := range stopped {
+		select {
+		case <-ch:
+		case <-deadline:
+			d.logger.Warn("Timed out waiting for the final RAs")
+			return
 		}
 	}
 }

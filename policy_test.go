@@ -230,3 +230,60 @@ func TestDeleteInterfaceSkipGoodbye(t *testing.T) {
 		require.Empty(t, drainUnicastRAs(sock))
 	})
 }
+
+// On shutdown Run must not return before every client of a unicast instance
+// has received the final RA; otherwise the process exits in the middle.
+func TestShutdownSendsAllFinalRAs(t *testing.T) {
+	clients := make([]string, 0, 50)
+	for i := 1; i <= 50; i++ {
+		clients = append(clients, netip.AddrFrom16([16]byte{0xfe, 0x80, 14: 0x01, 15: byte(i)}).String())
+	}
+
+	reg := newFakeSockRegistry()
+	devWatcher := newFakeDeviceWatcher("net0")
+	devWatcher.update("net0", deviceState{isUp: true, addr: net.HardwareAddr{0x11, 0x22, 0x33, 0x44, 0x55, 0x66}})
+	d, err := NewDaemon(
+		&Config{Interfaces: []*InterfaceConfig{{
+			ID:                     1,
+			Name:                   "net0",
+			RAIntervalMilliseconds: 60000,
+			RouterLifetimeSeconds:  10,
+			Preference:             "high",
+			Clients:                clients,
+		}}},
+		withSocketConstructor(reg.newSock),
+		withDeviceWatcher(devWatcher),
+	)
+	require.NoError(t, err)
+
+	ctx, cancel := context.WithCancel(t.Context())
+	done := make(chan struct{})
+	go func() {
+		d.Run(ctx)
+		close(done)
+	}()
+
+	var sock *fakeSock
+	eventully(t, func() bool {
+		sock, err = reg.getSock("net0")
+		return err == nil
+	})
+	// The RAs sent on load.
+	for range clients {
+		nextUnicastRA(t, sock, time.Second)
+	}
+
+	cancel()
+	select {
+	case <-done:
+	case <-time.After(5 * time.Second):
+		t.Fatal("Run did not return")
+	}
+
+	// No waiting here: everything must have been sent before Run returned.
+	final := drainUnicastRAs(sock)
+	require.Len(t, final, len(clients))
+	for _, ra := range final {
+		require.Equal(t, time.Duration(0), ra.msg.RouterLifetime)
+	}
+}
