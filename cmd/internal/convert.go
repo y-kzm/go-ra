@@ -11,20 +11,21 @@ import (
 
 func InterfaceConfigToProto(c *ra.InterfaceConfig) *gorav1.InterfaceConfig {
 	p := &gorav1.InterfaceConfig{
-		Id:                        int32(c.ID),
-		Description:               c.Description,
-		Name:                      c.Name,
-		RaIntervalMilliseconds:    int32(c.RAIntervalMilliseconds),
-		CurrentHopLimit:           int32(c.CurrentHopLimit),
-		Managed:                   c.Managed,
-		Other:                     c.Other,
-		Preference:                c.Preference,
-		RouterLifetimeSeconds:     int32(c.RouterLifetimeSeconds),
-		ReachableTimeMilliseconds: int64(c.ReachableTimeMilliseconds),
+		Id:                         int32(c.ID),
+		Description:                c.Description,
+		Name:                       c.Name,
+		RaIntervalMilliseconds:     int32(c.RAIntervalMilliseconds),
+		CurrentHopLimit:            int32(c.CurrentHopLimit),
+		Managed:                    c.Managed,
+		Other:                      c.Other,
+		Preference:                 c.Preference,
+		RouterLifetimeSeconds:      int32(c.RouterLifetimeSeconds),
+		ReachableTimeMilliseconds:  int64(c.ReachableTimeMilliseconds),
 		RetransmitTimeMilliseconds: int64(c.RetransmitTimeMilliseconds),
-		Mtu:                       int64(c.MTU),
-		Clients:                   c.Clients,
-		DisableRsReply:            c.DisableRSReply,
+		Mtu:                        int64(c.MTU),
+		Clients:                    c.Clients,
+		DisableRsReply:             c.DisableRSReply,
+		SourceAddress:              c.SourceAddress,
 	}
 
 	if c.SendGoodbye != nil {
@@ -33,8 +34,8 @@ func InterfaceConfigToProto(c *ra.InterfaceConfig) *gorav1.InterfaceConfig {
 
 	for _, prefix := range c.Prefixes {
 		pp := &gorav1.PrefixConfig{
-			Prefix:    prefix.Prefix,
-			OnLink:    prefix.OnLink,
+			Prefix:     prefix.Prefix,
+			OnLink:     prefix.OnLink,
 			Autonomous: prefix.Autonomous,
 		}
 		if prefix.ValidLifetimeSeconds != nil {
@@ -97,6 +98,7 @@ func InterfaceConfigFromProto(p *gorav1.InterfaceConfig) *ra.InterfaceConfig {
 		MTU:                        int(p.Mtu),
 		Clients:                    p.Clients,
 		DisableRSReply:             p.DisableRsReply,
+		SourceAddress:              p.SourceAddress,
 	}
 
 	if p.SendGoodbye != nil {
@@ -106,8 +108,8 @@ func InterfaceConfigFromProto(p *gorav1.InterfaceConfig) *ra.InterfaceConfig {
 
 	for _, pp := range p.Prefixes {
 		prefix := &ra.PrefixConfig{
-			Prefix:    pp.Prefix,
-			OnLink:    pp.OnLink,
+			Prefix:     pp.Prefix,
+			OnLink:     pp.OnLink,
 			Autonomous: pp.Autonomous,
 		}
 		if pp.ValidLifetimeSeconds != nil {

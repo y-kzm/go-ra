@@ -29,6 +29,9 @@ declarative configuration interface on top of it.
 - Route advertisement with Route Information option
 - NAT64 prefix discovery with PREF64 option
 - Unicast RA to specific clients
+- Per-instance RA source address (`sourceAddress`), so that instances advertising
+  different default-router state to the same host do not overwrite each other
+- One-shot RA (`SendRA`) to withdraw routes or a default router from specific hosts
 - Goodbye RA on daemon stop (RouterLifetime=0 with zeroed option lifetimes)
 - Multiple RA instances per network interface (identified by integer ID)
 - gRPC API for runtime management (`gorad` as server, `gora` as client)
@@ -161,6 +164,7 @@ service GoRAService {
   rpc AddInterface(AddInterfaceRequest) returns (AddInterfaceResponse);
   rpc UpdateInterface(UpdateInterfaceRequest) returns (UpdateInterfaceResponse);
   rpc DeleteInterface(DeleteInterfaceRequest) returns (DeleteInterfaceResponse);
+  rpc SendRA(SendRARequest) returns (SendRAResponse);
 }
 ```
 
@@ -172,7 +176,8 @@ service GoRAService {
 | `ListInterfaces` | Returns the current configuration of all RA instances | — |
 | `AddInterface` | Adds a new RA instance. Triggers config validation. | `INVALID_ARGUMENT` on validation failure |
 | `UpdateInterface` | Replaces the configuration of an existing RA instance. | `INVALID_ARGUMENT` on validation failure, `NOT_FOUND` if the ID does not exist |
-| `DeleteInterface` | Removes the RA instance with the given `id`. Sends a goodbye RA if `send_goodbye` is enabled. | `NOT_FOUND` if the ID does not exist |
+| `DeleteInterface` | Removes the RA instance with the given `id`. Sends a goodbye RA if `send_goodbye` is enabled and `skip_goodbye` is not set. Returns after the instance has stopped. | `NOT_FOUND` if the ID does not exist |
+| `SendRA` | Sends one RA built from the given configuration to its clients, without installing it. Prefixes in `withdrawn_routes` are added as Route Information Options with a zero lifetime. | `INVALID_ARGUMENT` if the configuration is invalid |
 
 ### Using grpcurl
 
@@ -219,6 +224,26 @@ for _, iface := range resp.Interfaces {
     fmt.Printf("[%d] %s: %s\n", iface.Id, iface.Name, iface.State)
 }
 ```
+
+### Source address and soft state
+
+Hosts keep one default-router entry per RA source address and overwrite its
+Router Lifetime and Preference with every RA from that address (RFC 4861
+Section 6.3.4, RFC 4191 Section 3.1). Two instances on one interface that
+advertise different values to the same host therefore undo each other unless
+they use different `sourceAddress` values. The address must be a link-local
+address assigned to the interface. If the interface has more than one
+link-local address, set `sourceAddress` on every instance: the default is the
+first link-local address the kernel lists, which can be the one added last.
+
+An instance with `clients` sends an RA right after it is added or updated,
+without waiting for the first interval.
+
+RAs are soft state. Removing a client from an instance, or a route from its
+configuration, does not remove what the host already learned; that expires
+with its lifetime. `SendRA` with `withdrawn_routes` removes it immediately.
+`DeleteInterface` with `skip_goodbye` removes an instance without the goodbye
+RA, for callers that send the withdrawal themselves.
 
 ## Motivation
 
