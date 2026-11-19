@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/netip"
+	"slices"
 	"sort"
 	"sync"
 	"time"
@@ -33,6 +34,10 @@ type Daemon struct {
 	// IDs of the instances to be removed without a goodbye RA on the next
 	// reload. Protected by advertisersLock.
 	silentDeletes map[int]struct{}
+
+	// Removed instances that may still be sending their final RAs.
+	// Protected by advertisersLock.
+	stopping []<-chan struct{}
 }
 
 // NewDaemon creates a new Daemon instance with the provided configuration and
@@ -120,12 +125,25 @@ reload:
 			cancelTimeout()
 		}
 
+		// Forget the removed workers that have finished stopping
+		d.stopping = slices.DeleteFunc(d.stopping, func(ch <-chan struct{}) bool {
+			select {
+			case <-ch:
+				return true
+			default:
+				return false
+			}
+		})
+
 		// Remove unnecessary workers
 		for _, advertiser := range toRemove {
 			id := advertiser.initialConfig.ID
 			d.logger.Info("Deleting RA sender", slog.Int("id", id), slog.String("interface", advertiser.initialConfig.Name))
 			_, silent := d.silentDeletes[id]
 			advertiser.stop(silent)
+			// It may still be sending its final RAs; a shutdown that
+			// follows immediately has to wait for it too.
+			d.stopping = append(d.stopping, advertiser.stopped)
 			delete(d.advertisers, id)
 			delete(d.silentDeletes, id)
 		}
@@ -161,10 +179,11 @@ const shutdownTimeout = 3 * time.Second
 // its lifetime expires.
 func (d *Daemon) waitAdvertisers(timeout time.Duration) {
 	d.advertisersLock.Lock()
-	stopped := make([]<-chan struct{}, 0, len(d.advertisers))
+	stopped := make([]<-chan struct{}, 0, len(d.advertisers)+len(d.stopping))
 	for _, adv := range d.advertisers {
 		stopped = append(stopped, adv.stopped)
 	}
+	stopped = append(stopped, d.stopping...)
 	d.advertisersLock.Unlock()
 
 	deadline := time.After(timeout)
