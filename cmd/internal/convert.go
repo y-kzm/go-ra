@@ -52,6 +52,7 @@ func InterfaceConfigToProto(c *ra.InterfaceConfig) *gorav1.InterfaceConfig {
 			Prefix:          route.Prefix,
 			LifetimeSeconds: int64(route.LifetimeSeconds),
 			Preference:      route.Preference,
+			OptionLength:    int32(route.OptionLength),
 		})
 	}
 
@@ -128,6 +129,7 @@ func InterfaceConfigFromProto(p *gorav1.InterfaceConfig) *ra.InterfaceConfig {
 			Prefix:          pr.Prefix,
 			LifetimeSeconds: int(pr.LifetimeSeconds),
 			Preference:      pr.Preference,
+			OptionLength:    int(pr.OptionLength),
 		})
 	}
 

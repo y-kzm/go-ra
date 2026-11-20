@@ -907,8 +907,11 @@ type RouteConfig struct {
 	Prefix          string                 `protobuf:"bytes,1,opt,name=prefix,proto3" json:"prefix,omitempty"`
 	LifetimeSeconds int64                  `protobuf:"varint,2,opt,name=lifetime_seconds,json=lifetimeSeconds,proto3" json:"lifetime_seconds,omitempty"`
 	Preference      string                 `protobuf:"bytes,3,opt,name=preference,proto3" json:"preference,omitempty"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+	// Length field of the Route Information Option in units of 8 octets
+	// (1, 2 or 3). 0 selects the shortest length that fits the prefix.
+	OptionLength  int32 `protobuf:"varint,4,opt,name=option_length,json=optionLength,proto3" json:"option_length,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *RouteConfig) Reset() {
@@ -960,6 +963,13 @@ func (x *RouteConfig) GetPreference() string {
 		return x.Preference
 	}
 	return ""
+}
+
+func (x *RouteConfig) GetOptionLength() int32 {
+	if x != nil {
+		return x.OptionLength
+	}
+	return 0
 }
 
 type RdnssConfig struct {
@@ -1188,13 +1198,14 @@ const file_api_gora_v1_gora_proto_rawDesc = "" +
 	"autonomous\x18\x03 \x01(\bR\n" +
 	"autonomous\x12Q\n" +
 	"\x16valid_lifetime_seconds\x18\x04 \x01(\v2\x1b.google.protobuf.Int64ValueR\x14validLifetimeSeconds\x12Y\n" +
-	"\x1apreferred_lifetime_seconds\x18\x05 \x01(\v2\x1b.google.protobuf.Int64ValueR\x18preferredLifetimeSeconds\"p\n" +
+	"\x1apreferred_lifetime_seconds\x18\x05 \x01(\v2\x1b.google.protobuf.Int64ValueR\x18preferredLifetimeSeconds\"\x95\x01\n" +
 	"\vRouteConfig\x12\x16\n" +
 	"\x06prefix\x18\x01 \x01(\tR\x06prefix\x12)\n" +
 	"\x10lifetime_seconds\x18\x02 \x01(\x03R\x0flifetimeSeconds\x12\x1e\n" +
 	"\n" +
 	"preference\x18\x03 \x01(\tR\n" +
-	"preference\"V\n" +
+	"preference\x12#\n" +
+	"\roption_length\x18\x04 \x01(\x05R\foptionLength\"V\n" +
 	"\vRdnssConfig\x12)\n" +
 	"\x10lifetime_seconds\x18\x01 \x01(\x03R\x0flifetimeSeconds\x12\x1c\n" +
 	"\taddresses\x18\x02 \x03(\tR\taddresses\"[\n" +

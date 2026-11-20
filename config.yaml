@@ -49,6 +49,11 @@ interfaces:
     lifetimeSeconds: 3600
     # Route preference. One of "low", "medium", or "high".
     preference: high
+    # Length of the Route Information Option in units of 8 bytes (RFC 4191):
+    # 1, 2 or 3. It must fit the prefix: at least 2 for a prefix longer
+    # than /0 and 3 for a prefix longer than /64. 0 (default) selects the
+    # shortest length that fits.
+    optionLength: 0
   # NOTE: multiple routes must have unique prefixes
 
   rdnsses:

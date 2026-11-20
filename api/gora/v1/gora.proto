@@ -130,6 +130,9 @@ message RouteConfig {
   string prefix           = 1;
   int64  lifetime_seconds = 2;
   string preference       = 3;
+  // Length field of the Route Information Option in units of 8 octets
+  // (1, 2 or 3). 0 selects the shortest length that fits the prefix.
+  int32  option_length    = 4;
 }
 
 message RdnssConfig {
