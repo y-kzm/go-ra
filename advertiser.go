@@ -5,6 +5,7 @@ package ra
 
 import (
 	"context"
+	"encoding/binary"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -137,12 +138,8 @@ func buildOptions(config *InterfaceConfig, hwAddr net.HardwareAddr) []ndp.Option
 		// At this point, we should have validated the
 		// configuration. If we haven't, it's a bug.
 		p := netip.MustParsePrefix(route.Prefix)
-		options = append(options, &ndp.RouteInformation{
-			PrefixLength:  uint8(p.Bits()),
-			Preference:    toNDPPreference(route.Preference),
-			RouteLifetime: time.Second * time.Duration(route.LifetimeSeconds),
-			Prefix:        p.Addr(),
-		})
+		options = append(options, routeOption(p, toNDPPreference(route.Preference),
+			time.Second*time.Duration(route.LifetimeSeconds), route.OptionLength))
 	}
 
 	for _, rdnss := range config.RDNSSes {
@@ -173,6 +170,34 @@ func buildOptions(config *InterfaceConfig, hwAddr net.HardwareAddr) []ndp.Option
 	}
 
 	return options
+}
+
+// optRouteInformation is the type of the Route Information Option (RFC 4191).
+const optRouteInformation = 24
+
+// routeOption builds a Route Information Option. optionLength is the Length
+// field in units of 8 octets; 0 selects the shortest length that fits the
+// prefix, which is what ndp.RouteInformation encodes. A longer option is
+// built as a raw option, with the unused prefix octets set to zero.
+//
+// The caller must have validated that optionLength fits the prefix.
+func routeOption(p netip.Prefix, preference ndp.Preference, lifetime time.Duration, optionLength int) ndp.Option {
+	if optionLength <= minRouteOptionLength(p.Bits()) {
+		return &ndp.RouteInformation{
+			PrefixLength:  uint8(p.Bits()),
+			Preference:    preference,
+			RouteLifetime: lifetime,
+			Prefix:        p.Addr(),
+		}
+	}
+
+	// Prefix length, flags, route lifetime, then (Length-1)*8 prefix octets.
+	value := make([]byte, 6+(optionLength-1)*8)
+	value[0] = uint8(p.Bits())
+	value[1] = uint8(preference) << 3
+	binary.BigEndian.PutUint32(value[2:6], uint32(lifetime.Seconds()))
+	copy(value[6:], p.Masked().Addr().AsSlice())
+	return &ndp.RawOption{Type: optRouteInformation, Length: uint8(optionLength), Value: value}
 }
 
 // toNDPPreference converts a validated preference string. Unknown values
@@ -468,6 +493,14 @@ func zeroOptionLifetimes(opts []ndp.Option) []ndp.Option {
 		case *ndp.RouteInformation:
 			r := *o
 			r.RouteLifetime = 0
+			result[i] = &r
+		case *ndp.RawOption:
+			// A Route Information Option with a configured length.
+			r := *o
+			r.Value = append([]byte(nil), o.Value...)
+			if r.Type == optRouteInformation && len(r.Value) >= 6 {
+				binary.BigEndian.PutUint32(r.Value[2:6], 0)
+			}
 			result[i] = &r
 		case *ndp.RecursiveDNSServer:
 			s := *o

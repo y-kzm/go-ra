@@ -168,6 +168,26 @@ type RouteConfig struct {
 	// identical prefixes (for different routers) have been received. Must
 	// be one of "low", "medium", or "high". Default is "medium".
 	Preference string `yaml:"preference" json:"preference" validate:"oneof=low medium high" default:"medium"`
+
+	// The Length field of the Route Information Option in units of 8
+	// octets (RFC 4191 Section 2.3): 1, 2 or 3, i.e. an option of 8, 16 or
+	// 24 bytes. It must be large enough for the prefix: at least 2 for a
+	// prefix longer than /0 and 3 for a prefix longer than /64. Default is
+	// 0, which selects the shortest length that fits the prefix.
+	OptionLength int `yaml:"optionLength" json:"optionLength" validate:"gte=0,lte=3,route_option_length"`
+}
+
+// minRouteOptionLength returns the smallest valid Length field of a Route
+// Information Option for a prefix of the given length (RFC 4191 Section 2.3).
+func minRouteOptionLength(prefixBits int) int {
+	switch {
+	case prefixBits == 0:
+		return 1
+	case prefixBits <= 64:
+		return 2
+	default:
+		return 3
+	}
 }
 
 // RDNSSConfig represents the RDNSS-specific configuration parameters
@@ -275,6 +295,21 @@ func (c *Config) defaultAndValidate() error {
 			96: true,
 		}
 		return validPrefixLengths[p.Bits()]
+	})
+
+	// Adhoc custom validator which validates that the configured Route
+	// Information Option length can hold the prefix of the route.
+	validate.RegisterValidation("route_option_length", func(fl validator.FieldLevel) bool {
+		length := int(fl.Field().Int())
+		if length == 0 {
+			return true
+		}
+		p, err := netip.ParsePrefix(fl.Parent().FieldByName("Prefix").String())
+		if err != nil {
+			// The prefix is reported by its own validation.
+			return true
+		}
+		return length >= minRouteOptionLength(p.Bits())
 	})
 
 	// Adhoc custom validator which validates the address is a link-local IPv6 address.

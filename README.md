@@ -32,6 +32,7 @@ declarative configuration interface on top of it.
 - Per-instance RA source address (`sourceAddress`), so that instances advertising
   different default-router state to the same host do not overwrite each other
 - One-shot RA (`SendRA`) to withdraw routes or a default router from specific hosts
+- Configurable length of the Route Information Option per route (`optionLength`: 8, 16 or 24 bytes; shortest by default)
 - Goodbye RA on daemon stop (RouterLifetime=0 with zeroed option lifetimes)
 - Multiple RA instances per network interface (identified by integer ID)
 - gRPC API for runtime management (`gorad` as server, `gora` as client)
